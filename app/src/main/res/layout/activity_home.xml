@@ -6,8 +6,64 @@
 
     <!-- As the main content view, the view below consumes the entire
          space available using match_parent in both dimensions. -->
-    <FrameLayout android:id="@+id/container" android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <RelativeLayout android:id="@+id/container" android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <Button
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:text="@string/Beacon"
+            android:id="@+id/button_beacon"
+            android:layout_gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/mode_select"
+            android:id="@+id/button_mode"
+            android:layout_gravity="center"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:layout_alignStart="@id/button_beacon"
+            android:layout_alignEnd="@id/button_beacon"
+            android:layout_above="@+id/button_beacon" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/launch_land"
+            android:id="@+id/button_launch_land"
+            android:layout_gravity="center"
+            android:layout_alignStart="@id/button_beacon"
+            android:layout_alignEnd="@id/button_beacon"
+            android:layout_above="@+id/button_mode" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:id="@+id/button_settings"
+            android:layout_gravity="center"
+            android:layout_alignStart="@id/button_beacon"
+            android:layout_alignEnd="@id/button_beacon"
+            android:layout_below="@+id/button_beacon"
+            android:layout_marginTop="20dp" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/camera"
+            android:id="@+id/button_camera"
+            android:layout_gravity="center"
+            android:layout_alignStart="@id/button_beacon"
+            android:layout_alignEnd="@id/button_beacon"
+            android:layout_below="@+id/button_settings"
+            android:layout_marginTop="20dp" />
+
+    </RelativeLayout>
 
     <!-- android:layout_gravity="start" tells DrawerLayout to treat
          this as a sliding drawer on the left side for left-to-right

@@ -11,4 +11,12 @@
     <string name="action_example">Example action</string>
 
     <string name="action_settings">Settings</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="Beacon">Beacon</string>
+    <string name="launch_land">Launch/Land</string>
+    <string name="mode_select">Mode Selection</string>
+    <string name="camera">Camera</string>
+    <string name="settings">Settings</string>
 </resources>
