@@ -21,4 +21,8 @@
     <string name="settings">Settings</string>
     <string name="welcome">Welcome to Muninn</string>
     <string name="munnin_logo">Muninn Logo</string>
+    <string name="launch">Launch</string>
+    <string name="land">Land</string>
+    <string name="beacon_settings">Beacon Settings</string>
+    <string name="app_settings">Application Settings</string>
 </resources>

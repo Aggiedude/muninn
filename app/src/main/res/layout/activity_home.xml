@@ -33,12 +33,13 @@
         <Button
             android:layout_width="128dp"
             android:layout_height="wrap_content"
-            android:text="@string/launch_land"
+            android:text="@string/launch"
             android:id="@+id/button_launch_land"
             android:layout_gravity="center"
             android:layout_alignStart="@id/button_beacon"
             android:layout_alignEnd="@id/button_beacon"
-            android:layout_above="@+id/button_mode" />
+            android:layout_above="@+id/button_mode"
+            android:layout_marginTop="20dp" />
 
         <Button
             android:layout_width="128dp"
@@ -69,7 +70,8 @@
             android:text="@string/welcome"
             android:id="@+id/welcome_text"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true" />
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp" />
 
         <ImageView
             android:layout_width="wrap_content"
