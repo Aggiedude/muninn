@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="flycam.csce_483.muninn" >
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/muninn_icon"
@@ -15,6 +18,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".CameraActivity"
+            android:label="@string/title_activity_camera"
+            android:screenOrientation="landscape"
+            android:parentActivityName=".HomeActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="flycam.csce_483.muninn.HomeActivity" />
         </activity>
     </application>
 

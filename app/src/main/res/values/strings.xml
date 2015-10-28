@@ -25,4 +25,7 @@
     <string name="land">Land</string>
     <string name="beacon_settings">Beacon Settings</string>
     <string name="app_settings">Application Settings</string>
+    <string name="title_activity_camera">CameraActivity</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

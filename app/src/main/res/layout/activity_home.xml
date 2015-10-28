@@ -16,7 +16,9 @@
             android:layout_gravity="center"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:nestedScrollingEnabled="true"
+            android:onClick="beaconSettings" />
 
         <Button
             android:layout_width="128dp"
@@ -50,7 +52,8 @@
             android:layout_alignStart="@id/button_beacon"
             android:layout_alignEnd="@id/button_beacon"
             android:layout_below="@+id/button_beacon"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:onClick="appSettings" />
 
         <Button
             android:layout_width="128dp"

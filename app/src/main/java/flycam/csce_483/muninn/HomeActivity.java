@@ -64,12 +64,9 @@ public class HomeActivity extends Activity {
 
 
         //Creates pop-up letting user know the whether or not the beacon was successfully connected
-        Context context = getApplicationContext();
-        CharSequence success_popup = "Beacon Connected!";
-        CharSequence fail_popup = "Beacon NOT Connected!";
-        Toast toast = Toast.makeText(context, fail_popup, Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(HomeActivity.this, "Beacon NOT connected!", Toast.LENGTH_SHORT);
         if(beaconStatus){
-            toast = Toast.makeText(context, success_popup, Toast.LENGTH_SHORT);
+            toast = Toast.makeText(HomeActivity.this, "Beacon connected!", Toast.LENGTH_SHORT);
         }
         toast.setGravity(Gravity.BOTTOM, 0, 200);
         toast.show();

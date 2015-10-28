@@ -1,0 +1,55 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="flycam.csce_483.muninn.CameraActivity">
+
+    <VideoView
+        android:id="@+id/liveVideo"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:layout_centerInParent="true" />
+
+    <ImageButton
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@drawable/ic_record"
+        android:background="@drawable/circle"
+        android:id="@+id/recordButtonFAB"
+        android:layout_gravity="right|bottom"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:visibility="visible"/>
+
+    <ImageButton
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@drawable/ic_stop"
+        android:background="@drawable/circle"
+        android:id="@+id/stopButtonFAB"
+        android:layout_gravity="right|bottom"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:visibility="invisible"/>
+
+    <ImageButton
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@drawable/ic_action"
+        android:background="@drawable/circle"
+        android:id="@+id/cameraButtonFAB"
+        android:layout_alignParentRight="false"
+        android:layout_toLeftOf="@+id/recordButtonFAB"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>
