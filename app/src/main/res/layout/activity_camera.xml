@@ -53,4 +53,15 @@
         android:layout_toLeftOf="@+id/recordButtonFAB"
         android:layout_alignParentBottom="true" />
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/recordingStatus"
+        android:src="@drawable/recording_symbol"
+        android:layout_above="@+id/stopButtonFAB"
+        android:layout_alignRight="@+id/stopButtonFAB"
+        android:layout_marginRight="30dp"
+        android:layout_marginBottom="10dp"
+        android:visibility="invisible" />
+
 </RelativeLayout>
