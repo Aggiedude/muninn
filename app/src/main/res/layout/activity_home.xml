@@ -2,7 +2,7 @@
 <android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:id="@+id/drawer_layout"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    tools:context=".HomeActivity">
+    tools:context=".HomeActivity" android:tag="main">
 
     <!-- Main Content -->
     <RelativeLayout android:id="@+id/container" android:layout_width="match_parent"
@@ -64,7 +64,8 @@
             android:layout_alignStart="@id/button_beacon"
             android:layout_alignEnd="@id/button_beacon"
             android:layout_below="@+id/button_settings"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:onClick="goToCamera"/>
 
         <TextView
             android:layout_width="wrap_content"

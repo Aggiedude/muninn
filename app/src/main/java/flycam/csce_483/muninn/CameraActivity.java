@@ -6,6 +6,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.net.Uri;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.VideoView;
 import android.widget.MediaController;
@@ -21,11 +23,15 @@ public class CameraActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_camera);
 
         VideoView videoView = (VideoView) findViewById(R.id.liveVideo);
 
-        String videoURL = "";
+        String videoURL = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
         Uri vidUri = Uri.parse(videoURL);
 
         videoView.setVideoURI(vidUri);
@@ -55,6 +61,12 @@ public class CameraActivity extends Activity {
                 ;// send request to stop recording on goPro
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        super.onBackPressed();
     }
 
     @Override
