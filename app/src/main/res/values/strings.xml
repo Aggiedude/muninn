@@ -14,7 +14,7 @@
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="Beacon">Beacon</string>
+    <string name="beacon">Beacon</string>
     <string name="launch_land">Launch/Land</string>
     <string name="mode_select">Mode Selection</string>
     <string name="camera">Camera</string>
@@ -28,4 +28,11 @@
     <string name="title_activity_camera">CameraActivity</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="connect">Connect</string>
+    <string name="status">Status:</string>
+    <string name="in_flight">In Flight</string>
+    <string name="landed">Landed</string>
+    <string name="landing">Landing...</string>
+    <string name="connected">Connected</string>
+    <string name="not_connected">Not Connected</string>
 </resources>

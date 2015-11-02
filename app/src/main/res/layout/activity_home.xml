@@ -8,65 +8,6 @@
     <RelativeLayout android:id="@+id/container" android:layout_width="match_parent"
         android:layout_height="match_parent" >
 
-        <Button
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:text="@string/Beacon"
-            android:id="@+id/button_beacon"
-            android:layout_gravity="center"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:nestedScrollingEnabled="true"
-            android:onClick="beaconSettings" />
-
-        <Button
-            android:layout_width="128dp"
-            android:layout_height="wrap_content"
-            android:text="@string/mode_select"
-            android:id="@+id/button_mode"
-            android:layout_gravity="center"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:layout_alignStart="@id/button_beacon"
-            android:layout_alignEnd="@id/button_beacon"
-            android:layout_above="@+id/button_beacon" />
-
-        <Button
-            android:layout_width="128dp"
-            android:layout_height="wrap_content"
-            android:text="@string/launch"
-            android:id="@+id/button_launch_land"
-            android:layout_gravity="center"
-            android:layout_alignStart="@id/button_beacon"
-            android:layout_alignEnd="@id/button_beacon"
-            android:layout_above="@+id/button_mode"
-            android:layout_marginTop="20dp" />
-
-        <Button
-            android:layout_width="128dp"
-            android:layout_height="wrap_content"
-            android:text="@string/settings"
-            android:id="@+id/button_settings"
-            android:layout_gravity="center"
-            android:layout_alignStart="@id/button_beacon"
-            android:layout_alignEnd="@id/button_beacon"
-            android:layout_below="@+id/button_beacon"
-            android:layout_marginTop="20dp"
-            android:onClick="appSettings" />
-
-        <Button
-            android:layout_width="128dp"
-            android:layout_height="wrap_content"
-            android:text="@string/camera"
-            android:id="@+id/button_camera"
-            android:layout_gravity="center"
-            android:layout_alignStart="@id/button_beacon"
-            android:layout_alignEnd="@id/button_beacon"
-            android:layout_below="@+id/button_settings"
-            android:layout_marginTop="20dp"
-            android:onClick="goToCamera"/>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -86,6 +27,137 @@
             android:src="@mipmap/muninn_logo"
             android:contentDescription="@string/munnin_logo"
             android:layout_marginTop="5dp" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/logo_image"
+            android:layout_toRightOf="@+id/logo_image"
+            android:background="@drawable/layout_border"
+            android:layout_above="@+id/mode_select_button">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/beacon"
+                android:id="@+id/beacon_text"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="5dp"
+                android:textStyle="bold|italic"
+                android:textSize="15sp"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/status"
+                android:id="@+id/beacon_status_text"
+                android:textSize="12sp"
+                android:layout_marginRight="8dp"
+                android:layout_above="@+id/beacon_connect_button" />
+
+            <Button
+                android:layout_width="128dp"
+                android:layout_height="wrap_content"
+                android:text="@string/connect"
+                android:id="@+id/beacon_connect_button"
+                android:layout_gravity="center"
+                android:layout_alignParentBottom="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/beacon_status"
+                android:textSize="12sp"
+                android:text="@string/not_connected"
+                android:layout_alignBottom="@+id/beacon_status_text"
+                android:layout_toEndOf="@id/beacon_status_text" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/logo_image"
+            android:layout_toLeftOf="@+id/logo_image"
+            android:background="@drawable/layout_border"
+            android:layout_above="@+id/mode_select_button">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/launch_land"
+                android:id="@+id/launch_land_text"
+                android:layout_marginTop="5dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:textStyle="bold|italic"
+                android:textSize="15sp"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/status"
+                android:id="@+id/launch_land_status_text"
+                android:textSize="12sp"
+                android:layout_marginRight="8dp"
+                android:layout_above="@+id/button_launch_land" />
+
+            <Button
+                android:layout_width="128dp"
+                android:layout_height="wrap_content"
+                android:text="@string/launch"
+                android:id="@+id/button_launch_land"
+                android:layout_gravity="center"
+                android:layout_alignParentBottom="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/launch_land_status"
+                android:layout_toEndOf="@+id/launch_land_status_text"
+                android:textSize="12sp"
+                android:text="@string/landing"
+                android:layout_alignBottom="@+id/launch_land_status_text" />
+
+
+        </RelativeLayout>
+
+        <Button
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:text="@string/mode_select"
+            android:id="@+id/mode_select_button"
+            android:layout_gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:nestedScrollingEnabled="true" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:id="@+id/button_settings"
+            android:layout_gravity="center"
+            android:layout_alignStart="@id/mode_select_button"
+            android:layout_alignEnd="@id/mode_select_button"
+            android:layout_below="@+id/mode_select_button"
+            android:layout_marginTop="20dp"
+            android:onClick="appSettings" />
+
+        <Button
+            android:layout_width="128dp"
+            android:layout_height="wrap_content"
+            android:text="@string/camera"
+            android:id="@+id/button_camera"
+            android:layout_gravity="center"
+            android:layout_alignStart="@id/mode_select_button"
+            android:layout_alignEnd="@id/mode_select_button"
+            android:layout_below="@+id/button_settings"
+            android:layout_marginTop="20dp"
+            android:onClick="goToCamera"/>
 
     </RelativeLayout>
 

@@ -2,21 +2,12 @@ package flycam.csce_483.muninn;
 
 import android.app.Activity;
 
-import android.app.ActionBar;
-import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.support.v4.widget.DrawerLayout;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +17,10 @@ public class HomeActivity extends Activity {
     private boolean flightStatus = false; // 1 for in flight, 0 otherwise
     private boolean beaconStatus = false; // 1 for connected, 0 otherwise
     protected String currentView;
+
+    // Varying TextViews
+    private TextView launch_land_text;
+    private TextView beacon_connection_text;
 
     @Override
     public void setContentView(int layoutResID) {
@@ -42,6 +37,9 @@ public class HomeActivity extends Activity {
         getActionBar().hide();
 
         setContentView(R.layout.activity_home);
+
+        launch_land_text = (TextView) findViewById(R.id.launch_land_status);
+        beacon_connection_text = (TextView) findViewById(R.id.beacon_status);
     }
 
 
@@ -54,14 +52,14 @@ public class HomeActivity extends Activity {
 
     }
 
-    // Switches view to the beacon settings menu
-    public void beaconSettings(View view){
-        setContentView(R.layout.beacon_settings_menu);
-    }
-
     // Switches view to the application settings menu
     public void appSettings(View view){
         setContentView(R.layout.app_settings_menu);
+    }
+
+    // Updates the current mode selection
+    public void selectMode(View view) {
+
     }
 
     public void goToCamera(View view) {
@@ -86,6 +84,11 @@ public class HomeActivity extends Activity {
         }
         toast.setGravity(Gravity.BOTTOM, 0, 200);
         toast.show();
+    }
+
+    // Will be used to refresh the connections, update drone status, etc.
+    private void refreshSettings() {
+
     }
 
     @Override

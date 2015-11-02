@@ -13,13 +13,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -113,23 +106,8 @@ public class CameraActivity extends Activity {
 
         String URL = "10.5.5.9/gp/gpControl/command/mode?p=0";
 
-        try {
-            HttpClient httpclient = new DefaultHttpClient();
-            HttpResponse response = httpclient.execute(new HttpGet(URL));
-            StatusLine statusLine = response.getStatusLine();
-            if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                response.getEntity().writeTo(out);
-                String responseString = out.toString();
-                out.close();
-            } else {
-                //Closes the connection.
-                response.getEntity().getContent().close();
-            }
-        }
-        catch(IOException e){
-            Log.e("Camera", "Connection to camera failed");
-        }
+        // Going to attmept to use the android default of "Volley" at this point.
+        // Many trials and errors with Apache
 
     }
 
