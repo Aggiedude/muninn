@@ -4,6 +4,9 @@ import android.app.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.JsonWriter;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,6 +14,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 public class HomeActivity extends Activity {
 
@@ -42,6 +49,15 @@ public class HomeActivity extends Activity {
 
         launchLandText = (TextView) findViewById(R.id.launch_land_status);
         beacon_connection_text = (TextView) findViewById(R.id.beacon_status);
+
+        // Creates handler to call the refreshSettings method every 10 seconds
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                refreshSettings();
+            }
+        }, 10000);
 
     }
 
@@ -106,6 +122,7 @@ public class HomeActivity extends Activity {
     // Will be used to refresh the connections, update drone status, etc.
     // Will connect to the beacon to retrieve the latest information
     private void refreshSettings() {
+        Log.d("main", "Settings Refreshed");
         //retrieve information
 
         if(!flightStatus /*&& still in flight via signals sent: still in the process of landing*/) {
@@ -118,6 +135,16 @@ public class HomeActivity extends Activity {
             launchLandButton.setClickable(true);
         }
 
+    }
+
+    private void generateJSON() {
+       //Json Writer object
+        OutputStream out = new OutputStream() {
+            @Override
+            public void write(int oneByte) throws IOException {
+
+            }
+        }
     }
 
     @Override
