@@ -18,8 +18,10 @@ public class HomeActivity extends Activity {
     private boolean beaconStatus = false; // 1 for connected, 0 otherwise
     protected String currentView;
 
+    protected Button launchLandButton;
+
     // Varying TextViews
-    private TextView launch_land_text;
+    private TextView launchLandText;
     private TextView beacon_connection_text;
 
     @Override
@@ -38,22 +40,37 @@ public class HomeActivity extends Activity {
 
         setContentView(R.layout.activity_home);
 
-        launch_land_text = (TextView) findViewById(R.id.launch_land_status);
+        launchLandText = (TextView) findViewById(R.id.launch_land_status);
         beacon_connection_text = (TextView) findViewById(R.id.beacon_status);
+
     }
 
 
 
-    // Goes through the action of attempting to launch or land the device
+    // Goes through the action of attempting to launch or land the device, sent via bluetooth
     private void launchLand(View view) {
-        Button launchLandButton = (Button) findViewById(R.id.button_launch_land);
 
-        // code goes here in order to connect
+        if(beaconStatus) {
+            if(flightStatus) { // If in flight
+                //send signals to land the drone
+                launchLandButton.setText(R.string.landing);
+                launchLandButton.setClickable(false);
+                launchLandText.setText(R.string.landing);
+            }
+            else { // on the ground
+                //send signals to launch the drone
+                launchLandButton.setText(R.string.land);
+                launchLandText.setText(R.string.in_flight);
+            }
+        }
+        else
+            connectBeacon();
 
     }
 
     // Switches view to the application settings menu
     public void appSettings(View view){
+        getActionBar().show();
         setContentView(R.layout.app_settings_menu);
     }
 
@@ -87,7 +104,19 @@ public class HomeActivity extends Activity {
     }
 
     // Will be used to refresh the connections, update drone status, etc.
+    // Will connect to the beacon to retrieve the latest information
     private void refreshSettings() {
+        //retrieve information
+
+        if(!flightStatus /*&& still in flight via signals sent: still in the process of landing*/) {
+            launchLandText.setText(R.string.landing);
+            launchLandButton.setText(R.string.landing);
+        }
+        else if(!flightStatus /*&& landed via signals*/) {
+            launchLandText.setText(R.string.landed);
+            launchLandButton.setText(R.string.launch);
+            launchLandButton.setClickable(true);
+        }
 
     }
 
