@@ -5,19 +5,18 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.JsonWriter;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 public class HomeActivity extends Activity {
 
@@ -25,11 +24,20 @@ public class HomeActivity extends Activity {
     private boolean beaconStatus = false; // 1 for connected, 0 otherwise
     protected String currentView;
 
+    private int hover_dist;
+    private int loop_radius;
+    private int follow_dist;
+
     protected Button launchLandButton;
 
     // Varying TextViews
     private TextView launchLandText;
     private TextView beacon_connection_text;
+
+    // Input Number Fields
+    private EditText hover_dist_input;
+    private EditText loop_rad_input;
+    private EditText follow_dist_input;
 
     @Override
     public void setContentView(int layoutResID) {
@@ -47,8 +55,24 @@ public class HomeActivity extends Activity {
 
         setContentView(R.layout.activity_home);
 
+        // Setting TextViews
         launchLandText = (TextView) findViewById(R.id.launch_land_status);
         beacon_connection_text = (TextView) findViewById(R.id.beacon_status);
+
+        // Setting EditText Fields
+        hover_dist_input = (EditText) findViewById(R.id.hover_dist_input);
+        loop_rad_input = (EditText) findViewById(R.id.loop_rad_input);
+        follow_dist_input = (EditText) findViewById(R.id.follow_dist_input);
+
+        // Default values for auto flight distances
+        hover_dist = 10;
+        loop_radius = 25;
+        follow_dist = 20;
+
+        hover_dist_input.setText(Integer.toString(hover_dist));
+        loop_rad_input.setText(Integer.toString(loop_radius));
+        follow_dist_input.setText(Integer.toString(follow_dist));
+
 
         // Creates handler to call the refreshSettings method every 10 seconds
         Handler handler = new Handler();
@@ -144,13 +168,13 @@ public class HomeActivity extends Activity {
             public void write(int oneByte) throws IOException {
 
             }
-        }
+        };
     }
 
     @Override
     public void onBackPressed() {
         //Checks if the current screen is not the activity_main.xml layout
-        if (!currentView.equals("main")) {
+        if (!"main".equals(currentView)) {
             setContentView(R.layout.activity_home);
         }
         else

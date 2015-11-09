@@ -8,10 +8,188 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/app_settings"
-        android:id="@+id/textView2"
+        android:id="@+id/app_settings_title"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
         android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/app_settings_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:orientation="vertical"
+        android:background="@drawable/layout_border"
+        android:gravity="center_horizontal"
+        android:id="@+id/linearLayout"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/mode_settings"
+            android:id="@+id/mode_settings_title"
+            android:layout_marginTop="5dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:textStyle="bold|italic"
+            android:textSize="18sp"
+            android:layout_marginBottom="30dp" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/hover_dist"
+                android:id="@+id/hover_dist_text"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="20dp" />
+
+            <EditText
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:ems="10"
+                android:id="@+id/hover_dist_input"
+                android:layout_toRightOf="@+id/follow_dist_text"
+                android:layout_alignBaseline="@+id/hover_dist_text"
+                android:layout_alignParentEnd="false"
+                android:gravity="center_horizontal"
+                android:text="10" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/feet"
+                android:id="@+id/hover_ft"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_toRightOf="@+id/hover_dist_input"
+                android:layout_alignBottom="@+id/hover_dist_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loop_radius"
+                android:id="@+id/loop_rad_text"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_below="@+id/hover_dist_text"
+                android:layout_marginBottom="20dp" />
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:ems="10"
+                android:id="@+id/loop_rad_input"
+                android:layout_alignBaseline="@+id/loop_rad_text"
+                android:text="25"
+                android:layout_alignParentEnd="false"
+                android:gravity="center_horizontal"
+                android:layout_alignLeft="@+id/hover_dist_input"
+                android:layout_alignRight="@+id/hover_dist_input" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/feet"
+                android:id="@+id/loop_ft"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_toRightOf="@+id/loop_rad_input"
+                android:layout_alignBottom="@+id/loop_rad_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/follow_dist"
+                android:id="@+id/follow_dist_text"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_below="@+id/loop_rad_text" />
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:ems="10"
+                android:id="@+id/follow_dist_input"
+                android:layout_alignBaseline="@+id/follow_dist_text"
+                android:text="20"
+                android:layout_alignParentEnd="false"
+                android:gravity="center_horizontal"
+                android:layout_alignLeft="@+id/hover_dist_input"
+                android:layout_alignRight="@+id/hover_dist_input" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/feet"
+                android:id="@+id/follow_ft"
+                android:textSize="16sp"
+                android:layout_marginRight="8dp"
+                android:layout_toRightOf="@+id/loop_rad_input"
+                android:layout_alignBottom="@+id/follow_dist_text" />
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/layout_border"
+        android:gravity="center_horizontal"
+        android:layout_below="@+id/linearLayout"
+        android:id="@+id/linearLayout2"
+        android:layout_alignLeft="@+id/linearLayout"
+        android:layout_alignRight="@+id/linearLayout"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_settings"
+            android:id="@+id/general_settings_title"
+            android:layout_marginTop="5dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:textStyle="bold|italic"
+            android:textSize="18sp"
+            android:layout_marginBottom="30dp" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal" >
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dark_theme"
+                android:id="@+id/switch1"
+                android:checked="false" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/save_settings"
+        android:id="@+id/save_settings_button"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp" />
 
 </RelativeLayout>

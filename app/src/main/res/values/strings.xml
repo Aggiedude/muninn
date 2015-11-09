@@ -33,4 +33,12 @@
     <string name="landing">Landing...</string>
     <string name="connected">Connected</string>
     <string name="not_connected">Not Connected</string>
+    <string name="mode_settings">Mode Settings</string>
+    <string name="hover_dist">Hover Distance:</string>
+    <string name="follow_dist">Follow Me Distance:</string>
+    <string name="loop_radius">Loop Radius:</string>
+    <string name="feet">ft.</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="general_settings">General Settings</string>
+    <string name="dark_theme">Dark Theme?</string>
 </resources>
