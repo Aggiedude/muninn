@@ -176,7 +176,7 @@
             <Switch
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/dark_theme"
+                android:text="@string/gps_select"
                 android:id="@+id/switch1"
                 android:checked="false" />
 
@@ -190,6 +190,7 @@
         android:id="@+id/save_settings_button"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginBottom="10dp"
+        android:onClick="saveSettings" />
 
 </RelativeLayout>
