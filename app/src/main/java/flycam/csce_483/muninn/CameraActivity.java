@@ -13,6 +13,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -21,6 +24,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import cz.msebera.android.httpclient.Header;
 
 public class CameraActivity extends Activity {
 
@@ -106,25 +111,23 @@ public class CameraActivity extends Activity {
 
         String URL = "10.5.5.9/gp/gpControl/command/mode?p=0";
 
-        // Going to attmept to use the android default of "Volley" at this point.
-        // Many trials and errors with Apache
-
     }
 
     private String sendRequest(String s) {
-
         String response = "";
-        try {
-            URL url = new URL(s);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-            response = readStream(in);
-            urlConnection.disconnect();
-        }
-        catch(IOException e) {
-            return "";
-        }
 
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get("https://google.com", new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                Log.d("camera", responseBody.toString());
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.d("camera", "failure");
+            }
+        });
         return response;
     }
 

@@ -4,6 +4,7 @@ import android.app.Activity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -59,7 +60,9 @@ public class HomeActivity extends Activity {
     // Fields for drone settings
 
     // Fields for Bluetooth
+    private final int REQUEST_ENABLE_BT = 3;
     private ArrayList<BluetoothDevice> foundDevices;
+    private BluetoothAdapter mBluetoothAdapter;
 
 
     @Override
@@ -109,6 +112,8 @@ public class HomeActivity extends Activity {
                 refreshSettings();
             }
         }, 10000);
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     }
 
@@ -180,6 +185,18 @@ public class HomeActivity extends Activity {
         startActivity(new Intent(this, CameraActivity.class));
     }
 
+    private void setupBT() {
+        if(mBluetoothAdapter == null) {
+            // Device does not support Bluetooth
+            Toast.makeText(getApplicationContext(), "This device does not support bluetooth. Please use this companion app with an appropriate device.", Toast.LENGTH_LONG).show();
+        }
+        else {
+            if (!mBluetoothAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
+        }
+    }
 
 
     // Goes through the process of connecting the phone to the beacon
@@ -226,10 +243,13 @@ public class HomeActivity extends Activity {
             reader.beginObject();
             while(reader.hasNext()){
                 String name = reader.nextName();
-                if(name.equals("")){
+                if(name.equals("drone_battery")){
 
                 }
-                else if(name.equals("")){
+                else if(name.equals("drone_connection")){
+
+                }
+                else if(name.equals("drone_status")) {
 
                 }
                 else
@@ -269,6 +289,14 @@ public class HomeActivity extends Activity {
             writer.name("testString").value("Hello, World!");
             writer.endObject();
             writer.close();
+
+            /*
+            flight_mode -> (loop, hover, follow)
+            launch_land -> launch, land, keep
+            hover_dist
+            follow_dist
+            loop_rad
+             */
 
         }
         catch (UnsupportedEncodingException e){
