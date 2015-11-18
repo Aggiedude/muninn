@@ -4,10 +4,13 @@ import android.app.Activity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.JsonReader;
+import android.util.JsonWriter;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -18,8 +21,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 
 public class HomeActivity extends Activity {
 
@@ -45,6 +55,12 @@ public class HomeActivity extends Activity {
     private EditText hover_dist_input;
     private EditText loop_rad_input;
     private EditText follow_dist_input;
+
+    // Fields for drone settings
+
+    // Fields for Bluetooth
+    private ArrayList<BluetoothDevice> foundDevices;
+
 
     @Override
     public void setContentView(int layoutResID) {
@@ -74,7 +90,16 @@ public class HomeActivity extends Activity {
         loop_radius = 25;
         follow_dist = 20;
 
-        // Default value for
+        // Prompts user to connect to Muninn wifi and bluetooth manually
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Make sure that you have connected to Muninn's wi-fi and bluetooth!");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ;// purposely left open
+            }
+        });
+        builder.create().show();
 
         // Creates handler to call the refreshSettings method every 10 seconds
         Handler handler = new Handler();
@@ -195,14 +220,63 @@ public class HomeActivity extends Activity {
 
     }
 
-    private void generateJSON() {
-       //Json Writer object
-        OutputStream out = new OutputStream() {
-            @Override
-            public void write(int oneByte) throws IOException {
+    private void parseJSON(InputStream in) {
+        try {
+            JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+            reader.beginObject();
+            while(reader.hasNext()){
+                String name = reader.nextName();
+                if(name.equals("")){
 
+                }
+                else if(name.equals("")){
+
+                }
+                else
+                    reader.skipValue();
             }
-        };
+            reader.endObject();
+
+        }
+        catch(UnsupportedEncodingException e) {
+            // do something
+        }
+        catch(IOException e){
+            // do something
+        }
+    }
+
+    private void writeJSONtoFile() {
+        File file = new File(getExternalCacheDir(), "testJSON.json");
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            generateJSON(out);
+        }
+        catch (IOException e) {
+            // do something
+        }
+    }
+
+    private void generateJSON(OutputStream out) {
+
+        try {
+            //Json Writer object
+            JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
+            writer.setIndent("    ");
+            writer.beginObject();
+            writer.name("testBool").value(true);
+            writer.name("testInt").value(12);
+            writer.name("testString").value("Hello, World!");
+            writer.endObject();
+            writer.close();
+
+        }
+        catch (UnsupportedEncodingException e){
+            // do something
+        }
+        catch (IOException e) {
+            // do something
+        }
     }
 
     @Override
