@@ -110,7 +110,6 @@ public class HomeActivity extends Activity {
 
     // Switches view to the application settings menu
     public void appSettings(View view){
-        getActionBar().show();
         setContentView(R.layout.app_settings_menu);
 
         // Setting EditText Fields
