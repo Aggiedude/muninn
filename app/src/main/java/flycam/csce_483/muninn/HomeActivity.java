@@ -17,8 +17,10 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +33,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Set;
 
 public class HomeActivity extends Activity {
 
@@ -63,6 +66,7 @@ public class HomeActivity extends Activity {
     private final int REQUEST_ENABLE_BT = 3;
     private ArrayList<BluetoothDevice> foundDevices;
     private BluetoothAdapter mBluetoothAdapter;
+    private ArrayAdapter<String> btArrayAdapter;
 
 
     @Override
@@ -186,6 +190,13 @@ public class HomeActivity extends Activity {
     }
 
     private void setupBT() {
+
+        requestBTOn();
+        showBTDevices();
+
+    }
+
+    private void requestBTOn() {
         if(mBluetoothAdapter == null) {
             // Device does not support Bluetooth
             Toast.makeText(getApplicationContext(), "This device does not support bluetooth. Please use this companion app with an appropriate device.", Toast.LENGTH_LONG).show();
@@ -195,6 +206,27 @@ public class HomeActivity extends Activity {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
+
+        }
+    }
+
+    private void showBTDevices() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+        builder.setView(R.layout.bluetooth_devices_menu);
+        builder.setTitle("Please choose a paired device");
+        builder.create().show();
+
+        ListView listView = (ListView) findViewById(R.id.btDevicesList);
+
+        foundDevices = new ArrayList<>(mBluetoothAdapter.getBondedDevices());
+        // If there are paired devices
+        if (foundDevices.size() > 0) {
+            // Loop through paired devices
+            for (BluetoothDevice device : foundDevices) {
+                // Add the name and address to an array adapter to show in a ListView
+                btArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+            listView.setAdapter(btArrayAdapter);
         }
     }
 
