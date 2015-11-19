@@ -34,7 +34,8 @@
             android:layout_below="@+id/logo_image"
             android:layout_toRightOf="@+id/logo_image"
             android:background="@drawable/layout_border"
-            android:layout_above="@+id/mode_select_button">
+            android:id="@+id/beaconLayout"
+            android:layout_alignBottom="@+id/launchLandLayout">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -78,11 +79,14 @@
 
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="120dp"
             android:layout_below="@+id/logo_image"
             android:layout_toLeftOf="@+id/logo_image"
             android:background="@drawable/layout_border"
-            android:layout_above="@+id/mode_select_button">
+            android:id="@+id/launchLandLayout"
+            android:layout_alignParentBottom="false"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentRight="false">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -120,7 +124,7 @@
                 android:id="@+id/launch_land_status"
                 android:layout_toEndOf="@+id/launch_land_status_text"
                 android:textSize="12sp"
-                android:text="@string/landing"
+                android:text="@string/landed"
                 android:layout_alignBottom="@+id/launch_land_status_text" />
 
 

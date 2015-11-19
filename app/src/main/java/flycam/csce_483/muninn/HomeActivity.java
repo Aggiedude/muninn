@@ -1,22 +1,36 @@
 package flycam.csce_483.muninn;
 
+import android.Manifest;
 import android.app.Activity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.GpsStatus;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.JsonReader;
 import android.util.JsonWriter;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,7 +47,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public class HomeActivity extends Activity {
 
@@ -46,6 +62,10 @@ public class HomeActivity extends Activity {
     private int hover_dist;
     private int loop_radius;
     private int follow_dist;
+
+    SharedPreferences sharedPreferences;
+    private LocationManager locationManager;
+    MyLocationListener myLocationListener;
 
     private int selectedMode;
 
@@ -63,17 +83,23 @@ public class HomeActivity extends Activity {
     // Fields for drone settings
 
     // Fields for Bluetooth
-    private final int REQUEST_ENABLE_BT = 3;
+    private int REQUEST_ENABLE_BT = 1;
+    private int REQUEST_DISCOVERABLE_BT = 2;
     private ArrayList<BluetoothDevice> foundDevices;
     private BluetoothAdapter mBluetoothAdapter;
     private ArrayAdapter<String> btArrayAdapter;
+    private BluetoothDevice beacon = null;
+    private BluetoothSocket btSocket;
+
+    final byte delimiter = 33;
+    int readBufferPosition = 0;
 
 
     @Override
     public void setContentView(int layoutResID) {
         View view = getLayoutInflater().inflate(layoutResID, null);
         //tag is needed for pressing back button to go back to splash screen
-        currentView = (String)view.getTag();
+        currentView = (String) view.getTag();
         super.setContentView(view);
     }
 
@@ -97,9 +123,18 @@ public class HomeActivity extends Activity {
         loop_radius = 25;
         follow_dist = 20;
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        myLocationListener = new MyLocationListener();
+
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
+        }
+        catch (SecurityException e) {
+            e.printStackTrace();
+        }
         // Prompts user to connect to Muninn wifi and bluetooth manually
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Make sure that you have connected to Muninn's wi-fi and bluetooth!");
+        builder.setMessage("Make sure that you have connected to Muninn's wi-fi and bluetooth! And also turn on your location services!");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -109,8 +144,8 @@ public class HomeActivity extends Activity {
         builder.create().show();
 
         // Creates handler to call the refreshSettings method every 10 seconds
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
+        final Handler settingsHandler = new Handler();
+        settingsHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 refreshSettings();
@@ -118,29 +153,92 @@ public class HomeActivity extends Activity {
         }, 10000);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        final Handler handler = new Handler();
 
+        final class workerThread implements Runnable {
+
+            private String btMsg;
+            public workerThread(String msg) {
+                btMsg = msg;
+            }
+            public void run() {
+                sendBTMessage(btMsg);
+                while(!Thread.currentThread().isInterrupted()) {
+                    int bytesAvailable;
+                    boolean workDone = false;
+
+                    try {
+
+                        final InputStream mmInputStream;
+                        mmInputStream = btSocket.getInputStream();
+                        bytesAvailable = mmInputStream.available();
+                        if(bytesAvailable > 0) {
+
+                            byte[] packetBytes = new byte[bytesAvailable];
+                            Log.d("bt receive","bytes available");
+                            byte[] readBuffer = new byte[1024];
+                            mmInputStream.read(packetBytes);
+
+                            for(int i=0;i<bytesAvailable;i++) {
+                                byte b = packetBytes[i];
+                                if(b == delimiter) {
+                                    byte[] encodedBytes = new byte[readBufferPosition];
+                                    System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                    final String data = new String(encodedBytes, "US-ASCII");
+                                    readBufferPosition = 0;
+
+                                    //The variable data now contains our full command
+                                    handler.post(new Runnable() {
+                                        public void run() {
+                                            //setTexts based upon data
+                                            parseMessage(data);
+                                        }
+                                    });
+                                    workDone = true;
+                                    break;
+                                }
+                                else {
+                                    readBuffer[readBufferPosition++] = b;
+                                }
+                            }
+                            if (workDone == true){
+                                btSocket.close();
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     // Goes through the action of attempting to launch or land the device, sent via bluetooth
     public void launchLand(View view) {
-
-        if(beaconStatus) {
-            if(flightStatus) { // If in flight
+        if(null == beacon){
+            connectBeacon(view);
+        }
+        else {
+            if (flightStatus) { // If in flight
                 //send signals to land the drone
-                launchLandButton.setText(R.string.landing);
-                launchLandButton.setClickable(false);
-                launchLandText.setText(R.string.landing);
+                //sendBTMessage("0launch_land:land");
+
+                launchLandText.setText(R.string.landed);
+                launchLandButton.setText(R.string.launch);
+                flightStatus=!flightStatus;
             }
             else { // on the ground
                 //send signals to launch the drone
+                //sendBTMessage("0launch_land:launch");
+
                 launchLandButton.setText(R.string.land);
                 launchLandText.setText(R.string.in_flight);
+                flightStatus=!flightStatus;
             }
         }
-        else
-            connectBeacon(view);
-
     }
+
 
     // Switches view to the application settings menu
     public void appSettings(View view){
@@ -150,6 +248,11 @@ public class HomeActivity extends Activity {
         hover_dist_input = (EditText) findViewById(R.id.hover_dist_input);
         loop_rad_input = (EditText) findViewById(R.id.loop_rad_input);
         follow_dist_input = (EditText) findViewById(R.id.follow_dist_input);
+
+        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        hover_dist = sharedPreferences.getInt("hover_dist", 10);
+        loop_radius = sharedPreferences.getInt("loop_radius",25);
+        follow_dist = sharedPreferences.getInt("follow_dist",20);
 
         // Sets the input as what the user has saved already
         hover_dist_input.setText(Integer.toString(hover_dist));
@@ -163,10 +266,29 @@ public class HomeActivity extends Activity {
         loop_radius = Integer.parseInt(loop_rad_input.getText().toString());
         follow_dist = Integer.parseInt(follow_dist_input.getText().toString());
 
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("hover_dist", hover_dist);
+        editor.putInt("loop_radius", loop_radius);
+        editor.putInt("follow_dist", follow_dist);
+        editor.commit();
+
         // Get switch information
 
         Toast.makeText(getApplicationContext(), "Settings have been saved!", Toast.LENGTH_SHORT).show();
+        //sendBTMessage(generateSettingsMessage());
+
         setContentView(R.layout.activity_home);
+    }
+
+
+    private String generateSettingsMessage() {
+        String message = "1";
+
+        message += "hover_distance:" + hover_dist + ";";
+        message += "loop_radius:" + loop_radius + ";";
+        message += "follow_distance:" + follow_dist;
+
+        return message;
     }
 
     // Updates the current mode selection
@@ -180,6 +302,21 @@ public class HomeActivity extends Activity {
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Muninn is now set to " + modes[which] + " mode!", Toast.LENGTH_SHORT).show();
                         selectedMode = which;
+                        String message = "";
+                        switch (selectedMode){
+                            case 0 :
+                                message+="hover";
+                                break;
+                            case 1 :
+                                message+="loop";
+                                break;
+                            case 2 :
+                                message+="follow";
+                                break;
+                            default:
+                                message+="ERR";
+                        }
+                        //sendBTMessage("2flight_mode:"+message);
                     }
                 });
         builder.create().show();
@@ -190,60 +327,85 @@ public class HomeActivity extends Activity {
     }
 
     private void setupBT() {
-
-        requestBTOn();
-        showBTDevices();
-
-    }
-
-    private void requestBTOn() {
         if(mBluetoothAdapter == null) {
             // Device does not support Bluetooth
             Toast.makeText(getApplicationContext(), "This device does not support bluetooth. Please use this companion app with an appropriate device.", Toast.LENGTH_LONG).show();
         }
         else {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
+            requestBTOn();
+        }
+    }
 
+    private void requestBTOn() {
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+        else {
+            showBTDevices();
         }
     }
 
     private void showBTDevices() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-        builder.setView(R.layout.bluetooth_devices_menu);
-        builder.setTitle("Please choose a paired device");
-        builder.create().show();
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        ListView listView = (ListView) findViewById(R.id.btDevicesList);
+        builder.setTitle("Choose Paired Bluetooth Device");
 
+        // get paired devices
         foundDevices = new ArrayList<>(mBluetoothAdapter.getBondedDevices());
-        // If there are paired devices
-        if (foundDevices.size() > 0) {
-            // Loop through paired devices
-            for (BluetoothDevice device : foundDevices) {
-                // Add the name and address to an array adapter to show in a ListView
-                btArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+        btArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+
+        // put it's one to the adapter
+        for(BluetoothDevice device : foundDevices)
+            btArrayAdapter.add(device.getName()+ "\n" + device.getAddress());
+
+        builder.setSingleChoiceItems(btArrayAdapter, foundDevices.indexOf(beacon), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                Toast.makeText(getApplicationContext(), "Paired with " + foundDevices.get(which), Toast.LENGTH_SHORT).show();
+                beacon = foundDevices.get(which);
             }
-            listView.setAdapter(btArrayAdapter);
+        });
+
+        builder.create();
+        builder.show();
+    }
+
+    private void sendBTMessage(String message) {
+        UUID uuid = UUID.fromString("94f39d29-7d6d-437d-973b-fba39e49d4ee");
+        try {
+            btSocket = beacon.createInsecureRfcommSocketToServiceRecord(uuid);
+
+            if(!btSocket.isConnected()){
+                btSocket.connect();
+            }
+
+            String mes = message;
+            OutputStream out = btSocket.getOutputStream();
+            out.write(mes.getBytes());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == REQUEST_ENABLE_BT){
+            if(resultCode == RESULT_OK){
+                showBTDevices();
+            }
+            else{
+                Toast.makeText(this, "ooops. Something went wrong. Try Again.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     // Goes through the process of connecting the phone to the beacon
     public void connectBeacon(View view) {
 
-        if(!beaconStatus) {
-
-            // Code to connect to beacon
-
-
-            //Creates pop-up letting user know the whether or not the beacon was successfully connected
-            Toast.makeText(getApplicationContext(), "Beacon NOT connected!", Toast.LENGTH_SHORT).show();
-            if (beaconStatus) {
-               Toast.makeText(getApplicationContext(), "Beacon connected!", Toast.LENGTH_SHORT).show();
-            }
+        if(null == beacon) {
+            setupBT();
         }
         else {
             Toast.makeText(getApplicationContext(), "Beacon is already connected!", Toast.LENGTH_SHORT).show();
@@ -255,88 +417,21 @@ public class HomeActivity extends Activity {
     // Will connect to the beacon to retrieve the latest information
     private void refreshSettings() {
         Log.d("main", "Settings Refreshed");
-        //retrieve information
-
-        if(!flightStatus /*&& still in flight via signals sent: still in the process of landing*/) {
-            launchLandText.setText(R.string.landing);
-            launchLandButton.setText(R.string.landing);
+        String gpsMessage = "";
+        //send GPS information
+        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            gpsMessage+="3long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;
+            sendBTMessage(gpsMessage);
         }
-        else if(!flightStatus /*&& landed via signals*/) {
-            launchLandText.setText(R.string.landed);
-            launchLandButton.setText(R.string.launch);
-            launchLandButton.setClickable(true);
+        else{
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, 0);
         }
 
     }
 
-    private void parseJSON(InputStream in) {
-        try {
-            JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
-            reader.beginObject();
-            while(reader.hasNext()){
-                String name = reader.nextName();
-                if(name.equals("drone_battery")){
+    private void parseMessage(String message) {
 
-                }
-                else if(name.equals("drone_connection")){
-
-                }
-                else if(name.equals("drone_status")) {
-
-                }
-                else
-                    reader.skipValue();
-            }
-            reader.endObject();
-
-        }
-        catch(UnsupportedEncodingException e) {
-            // do something
-        }
-        catch(IOException e){
-            // do something
-        }
-    }
-
-    private void writeJSONtoFile() {
-        File file = new File(getExternalCacheDir(), "testJSON.json");
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            generateJSON(out);
-        }
-        catch (IOException e) {
-            // do something
-        }
-    }
-
-    private void generateJSON(OutputStream out) {
-
-        try {
-            //Json Writer object
-            JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
-            writer.setIndent("    ");
-            writer.beginObject();
-            writer.name("testBool").value(true);
-            writer.name("testInt").value(12);
-            writer.name("testString").value("Hello, World!");
-            writer.endObject();
-            writer.close();
-
-            /*
-            flight_mode -> (loop, hover, follow)
-            launch_land -> launch, land, keep
-            hover_dist
-            follow_dist
-            loop_rad
-             */
-
-        }
-        catch (UnsupportedEncodingException e){
-            // do something
-        }
-        catch (IOException e) {
-            // do something
-        }
     }
 
     @Override
