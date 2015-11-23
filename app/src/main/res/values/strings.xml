@@ -41,4 +41,7 @@
     <string name="dark_theme">Dark Theme?</string>
     <string name="gps_select">Use This Phone\'s GPS?</string>
     <string name="devices">Found Devices</string>
+    <string name="drone_settings">Drone Settings</string>
+    <string name="drone_status">Drone Status</string>
+    <string name="connect_status">Connection Status:</string>
 </resources>

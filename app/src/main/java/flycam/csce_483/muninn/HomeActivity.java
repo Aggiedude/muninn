@@ -20,13 +20,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.util.JsonReader;
-import android.util.JsonWriter;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -71,6 +66,8 @@ public class HomeActivity extends Activity {
 
     protected Button launchLandButton;
 
+    private DrawerLayout mDrawerLayout;
+
     // Varying TextViews
     private TextView launchLandText;
     private TextView beacon_connection_text;
@@ -110,6 +107,30 @@ public class HomeActivity extends Activity {
         getActionBar().hide();
 
         setContentView(R.layout.activity_home);
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+                invalidateOptionsMenu();
+            }
+        });
+
 
         // Setting TextViews
         launchLandText = (TextView) findViewById(R.id.launch_land_status);
@@ -357,7 +378,7 @@ public class HomeActivity extends Activity {
 
         // put it's one to the adapter
         for(BluetoothDevice device : foundDevices)
-            btArrayAdapter.add(device.getName()+ "\n" + device.getAddress());
+            btArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 
         builder.setSingleChoiceItems(btArrayAdapter, foundDevices.indexOf(beacon), new DialogInterface.OnClickListener() {
             @Override
