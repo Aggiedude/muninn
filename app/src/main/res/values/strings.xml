@@ -44,4 +44,10 @@
     <string name="drone_settings">Drone Settings</string>
     <string name="drone_status">Drone Status</string>
     <string name="connect_status">Connection Status:</string>
+    <string name="battery">Battery:</string>
+    <string name="percent_symbol">%</string>
+    <string name="flight_mode">Flight Mode:</string>
+    <string name="hover">Hover</string>
+    <string name="loop">Loop</string>
+    <string name="follow_me">Follow Me</string>
 </resources>

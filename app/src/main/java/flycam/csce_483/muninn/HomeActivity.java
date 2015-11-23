@@ -20,6 +20,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.support.annotation.WorkerThread;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
@@ -33,6 +34,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,6 +44,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +53,7 @@ import java.util.UUID;
 public class HomeActivity extends Activity {
 
     final CharSequence[] modes = {"Hover", "Loop", "Follow-Me"};
+    private int selectedMode;
 
     private boolean flightStatus = false; // 1 for in flight, 0 otherwise
     private boolean beaconStatus = false; // 1 for connected, 0 otherwise
@@ -58,15 +63,16 @@ public class HomeActivity extends Activity {
     private int loop_radius;
     private int follow_dist;
 
+    private int temp_counter = 0;
+
     SharedPreferences sharedPreferences;
     private LocationManager locationManager;
     MyLocationListener myLocationListener;
 
-    private int selectedMode;
-
     protected Button launchLandButton;
 
     private DrawerLayout mDrawerLayout;
+    private View drawerView;
 
     // Varying TextViews
     private TextView launchLandText;
@@ -78,6 +84,7 @@ public class HomeActivity extends Activity {
     private EditText follow_dist_input;
 
     // Fields for drone settings
+    private int batteryLevel;
 
     // Fields for Bluetooth
     private int REQUEST_ENABLE_BT = 1;
@@ -109,25 +116,32 @@ public class HomeActivity extends Activity {
         setContentView(R.layout.activity_home);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerView = (View)findViewById(R.id.drawer);
         mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
-                invalidateOptionsMenu();
+
             }
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                invalidateOptionsMenu();
+
             }
 
             @Override
             public void onDrawerClosed(View drawerView) {
-                invalidateOptionsMenu();
+
             }
 
             @Override
             public void onDrawerStateChanged(int newState) {
-                invalidateOptionsMenu();
+                TextView dflight_stat = (TextView) findViewById(R.id.drone_flight_status_text);
+                TextView dbattery_text = (TextView) findViewById(R.id.battery_level_text);
+                TextView dmode = (TextView) findViewById(R.id.drone_status_flight_mode_text);
+
+                dflight_stat.setText(launchLandText.getText().toString());
+                dbattery_text.setText(""+batteryLevel);
+                dmode.setText(modes[selectedMode]);
             }
         });
 
@@ -164,15 +178,6 @@ public class HomeActivity extends Activity {
         });
         builder.create().show();
 
-        // Creates handler to call the refreshSettings method every 10 seconds
-        final Handler settingsHandler = new Handler();
-        settingsHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                refreshSettings();
-            }
-        }, 10000);
-
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         final Handler handler = new Handler();
 
@@ -189,14 +194,14 @@ public class HomeActivity extends Activity {
                     boolean workDone = false;
 
                     try {
-
+                        Log.d("refreshThread", "attempting btConnection for receiving");
                         final InputStream mmInputStream;
                         mmInputStream = btSocket.getInputStream();
                         bytesAvailable = mmInputStream.available();
                         if(bytesAvailable > 0) {
 
                             byte[] packetBytes = new byte[bytesAvailable];
-                            Log.d("bt receive","bytes available");
+                            Log.d("bt receive","bytes available:" + bytesAvailable);
                             byte[] readBuffer = new byte[1024];
                             mmInputStream.read(packetBytes);
 
@@ -229,15 +234,46 @@ public class HomeActivity extends Activity {
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
+                        Toast.makeText(getApplicationContext(), "Refresh error: !", Toast.LENGTH_SHORT).show();
+                    }
+                    catch (NullPointerException e) {
+                        e.printStackTrace();
+//                        Toast.makeText(getApplicationContext(), "Beacon error: Not connected!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
         }
+
+        // Creates handler to refresh settings every 10 seconds
+        final Handler settingsHandler = new Handler();
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (null != beacon) {
+                        Log.d("refreshHandler", "Attempting new refresh thread: " + temp_counter++);
+                        //(new Thread(new workerThread("4refresh:na"))).start();
+                        Toast.makeText(getApplicationContext(), "Settings refreshed!", Toast.LENGTH_SHORT).show();
+                        sendBTMessage("Testing:" + temp_counter);
+                        Log.d("refreshHandler", "GPS is: " + getGPSCoordinates());
+                    }
+                    settingsHandler.postDelayed(this, 10000);
+                }
+                catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        settingsHandler.postDelayed(runnable, 10000);
+
+
+
     }
 
     // Goes through the action of attempting to launch or land the device, sent via bluetooth
     public void launchLand(View view) {
-        if(null == beacon){
+        /*if(null == beacon){
             connectBeacon(view);
         }
         else {
@@ -257,7 +293,8 @@ public class HomeActivity extends Activity {
                 launchLandText.setText(R.string.in_flight);
                 flightStatus=!flightStatus;
             }
-        }
+        }*/
+        sendBTMessage("Testing Message!!!");
     }
 
 
@@ -376,7 +413,7 @@ public class HomeActivity extends Activity {
         foundDevices = new ArrayList<>(mBluetoothAdapter.getBondedDevices());
         btArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 
-        // put it's one to the adapter
+        // put paired names and addresses to the adapter
         for(BluetoothDevice device : foundDevices)
             btArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 
@@ -394,19 +431,53 @@ public class HomeActivity extends Activity {
     }
 
     private void sendBTMessage(String message) {
-        UUID uuid = UUID.fromString("94f39d29-7d6d-437d-973b-fba39e49d4ee");
+        Log.d("btMessage",message);
         try {
-            btSocket = beacon.createInsecureRfcommSocketToServiceRecord(uuid);
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            //UUID uuid = beacon.getUuids()[0].getUuid();
+
+            btSocket = beacon.createRfcommSocketToServiceRecord(uuid);
+            mBluetoothAdapter.cancelDiscovery();
+            Log.d("btSocket","Connected to:" + btSocket.getRemoteDevice().getName());
+            for(int i = 0; i < beacon.getUuids().length; i++){
+                Log.d("UUIDs", "" + beacon.getUuids()[i].getUuid());
+            }
 
             if(!btSocket.isConnected()){
+                Log.d("btSocket", "Using this UUID to connect: " + uuid);
                 btSocket.connect();
             }
 
+            Log.d("btSocket", "CONNECTED!!!");
             String mes = message;
             OutputStream out = btSocket.getOutputStream();
             out.write(mes.getBytes());
         }
         catch (IOException e) {
+            e.printStackTrace();
+            try{
+                for(int i = 0; i < beacon.getUuids().length; i++){
+                    Log.d("btSocket","trying to create socket with: " + (beacon.getUuids()[i].getUuid()));
+                    btSocket = beacon.createRfcommSocketToServiceRecord(beacon.getUuids()[i].getUuid());
+                    btSocket.connect();
+                }
+            }
+            catch (Exception ex){
+                ex.printStackTrace();
+                try{
+                    for(int i = 1; i < beacon.getUuids().length; i++){
+                        Log.d("btSocket","trying to create socket with: " + (beacon.getUuids()[i].getUuid()));
+                        btSocket = beacon.createRfcommSocketToServiceRecord(beacon.getUuids()[i].getUuid());
+                        btSocket.connect();
+                    }
+                }
+                catch (Exception exe){
+                    exe.printStackTrace();
+                }
+            }
+            //Toast.makeText(this, "Beacon error: Not connected!", Toast.LENGTH_SHORT).show();
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -434,21 +505,18 @@ public class HomeActivity extends Activity {
 
     }
 
-    // Will be used to refresh the connections, update drone status, etc.
-    // Will connect to the beacon to retrieve the latest information
-    private void refreshSettings() {
-        Log.d("main", "Settings Refreshed");
+    private String getGPSCoordinates() {
         String gpsMessage = "";
         //send GPS information
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            gpsMessage+="3long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;
-            sendBTMessage(gpsMessage);
+            gpsMessage+="3long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;;
         }
         else{
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivityForResult(intent, 0);
         }
 
+        return gpsMessage;
     }
 
     private void parseMessage(String message) {
