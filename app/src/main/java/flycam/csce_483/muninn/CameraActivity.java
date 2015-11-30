@@ -13,17 +13,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -35,6 +33,9 @@ public class CameraActivity extends Activity {
 
     private boolean mode; // true is camera mode, false is video mode
     private boolean recording;
+    private boolean goProHero4 = false; // false is hero2, true is hero4
+
+    private VideoView videoView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,13 +46,13 @@ public class CameraActivity extends Activity {
 
         setContentView(R.layout.activity_camera);
 
-        connectToCamera();
+        //connectToCamera();
 
-        VideoView videoView = (VideoView) findViewById(R.id.liveVideo);
-
-        String videoURL = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
+        videoView = (VideoView) findViewById(R.id.liveVideo);
+        String videoURL = "http://10.5.5.9:8080/live/amba.m3u8";
         Uri vidUri = Uri.parse(videoURL);
 
+        Log.d("video","VIDEO URL: "+videoURL);
         videoView.setVideoURI(vidUri);
 
         final ImageView recordingStatus = (ImageView) findViewById(R.id.recordingStatus);
@@ -68,12 +69,24 @@ public class CameraActivity extends Activity {
                 if (!mode && !recording) {
                     mode = true;
                     Log.d("camera", "Made it through to mode switch");
-                    String response = sendRequest("10.5.5.9/gp/gpControl/command/mode?p=1"); // switches to camera mode
-                    Log.d("camera", response);
+
+                    // switches to camera mode
+                    if(goProHero4) {
+                        sendRequest("10.5.5.9/gp/gpControl/command/mode?p=1");
+                    }
+                    else
+                        sendRequest("http://10.5.5.9:80/camera/CM?t=muninn483&p=%01");
                 }
+
                 if (mode && !recording) {
                     Log.d("camera", "Made it through to shutter switch");
-                    sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");// send request to take picture on goPro
+
+                    // send request to take picture on goPro
+                    if(goProHero4){
+                        sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");
+                    }
+                    else
+                        sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%01");
                 }
             }
         });
@@ -83,10 +96,27 @@ public class CameraActivity extends Activity {
             public void onClick(View v) {
                 if(mode){
                     mode = false;
-                    sendRequest("10.5.5.9/gp/gpControl/command/mode?p=0"); // switches to video mode
+
+                    // switches to video mode
+                    if(goProHero4){
+                        sendRequest("10.5.5.9/gp/gpControl/command/mode?p=0");
+                    }
+                    else {
+                        sendRequest("http://10.5.5.9:80/camera/CM?t=muninn483&p=%00");
+
+                        videoView.start();
+                    }
+
                 }
                 if (!mode && !recording) {
-                    sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");// send request to start recording on goPro
+                    // send request to start recording on goPro
+                    if(goProHero4){
+                        sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");
+                    }
+                    else {
+                        sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%01");
+                    }
+
                     recording = true;
                     fabRecord.setVisibility(View.INVISIBLE);
                     fabStopRecord.setVisibility(View.VISIBLE);
@@ -98,7 +128,16 @@ public class CameraActivity extends Activity {
         fabStopRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=0");// send request to stop recording on goPro
+
+                // send request to stop recording on goPro
+                if(goProHero4){
+                    sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=0");
+                }
+                else {
+                    sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%00");
+                }
+
+                videoView.stopPlayback();
                 recording = false;
                 fabRecord.setVisibility(View.VISIBLE);
                 fabStopRecord.setVisibility(View.INVISIBLE);
@@ -109,26 +148,40 @@ public class CameraActivity extends Activity {
 
     private void connectToCamera() {
 
-        String URL = "10.5.5.9/gp/gpControl/command/mode?p=0";
+        if(goProHero4){
+            sendRequest("10.5.5.9/gp/gpControl/command/mode?p=0");
+        }
+        else
+            sendRequest("http://10.5.5.9:80/bacpac/PW?t=muninn483&p=%00");
 
     }
 
-    private String sendRequest(String s) {
-        String response = "";
-        Log.d("camera", "attempting to GET request at " + s );
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(s, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                Log.d("camera", responseBody.toString());
-            }
+    private void sendRequest(String s) {
+        String url = s;
 
+        // Request a string response
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        // Result handling
+                        Log.d("camera","SUCCESS");
+
+                    }
+                }, new Response.ErrorListener() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                Log.d("camera", "failure");
+            public void onErrorResponse(VolleyError error) {
+
+                // Error handling
+                Log.d("camera","Something went wrong!");
+                error.printStackTrace();
+
             }
         });
-        return response;
+
+        // Add the request to the queue
+        Volley.newRequestQueue(this).add(stringRequest);
     }
 
     @Override
