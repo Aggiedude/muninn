@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -85,6 +86,8 @@ public class HomeActivity extends Activity {
 
     // Fields for drone settings
     private int batteryLevel;
+    private boolean isDroneConnected;
+    private int droneMPH;
 
     // Fields for Bluetooth
     private int REQUEST_ENABLE_BT = 1;
@@ -143,6 +146,18 @@ public class HomeActivity extends Activity {
                 dbattery_text.setText(""+batteryLevel);
                 dmode.setText(modes[selectedMode]);
             }
+        });
+
+        ImageButton drawerBtn = (ImageButton) findViewById(R.id.drawerImageButton);
+        drawerBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                //Opens the Drawer
+                mDrawerLayout.openDrawer(drawerView);
+                Log.d("drawer","Button clicked!");
+            }
+
         });
 
 
@@ -253,21 +268,19 @@ public class HomeActivity extends Activity {
                 try {
                     if (null != beacon) {
                         Log.d("refreshHandler", "Attempting new refresh thread: " + temp_counter++);
-                        //(new Thread(new workerThread("4refresh:na"))).start();
+                        //(new Thread(new workerThread("refresh:na"))).start();
                         Toast.makeText(getApplicationContext(), "Settings refreshed!", Toast.LENGTH_SHORT).show();
                         sendBTMessage("Testing:" + temp_counter);
                         Log.d("refreshHandler", "GPS is: " + getGPSCoordinates());
                     }
-                    settingsHandler.postDelayed(this, 10000);
+                    settingsHandler.postDelayed(this, 2000);
                 }
                 catch(Exception e) {
                     e.printStackTrace();
                 }
             }
         };
-        settingsHandler.postDelayed(runnable, 10000);
-
-
+        settingsHandler.postDelayed(runnable, 2000);
 
     }
 
@@ -435,15 +448,14 @@ public class HomeActivity extends Activity {
         try {
             UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
             //UUID uuid = beacon.getUuids()[0].getUuid();
+            if(null == btSocket)
+                btSocket = beacon.createRfcommSocketToServiceRecord(uuid);
 
-            btSocket = beacon.createRfcommSocketToServiceRecord(uuid);
             mBluetoothAdapter.cancelDiscovery();
-            Log.d("btSocket","Connected to:" + btSocket.getRemoteDevice().getName());
-            for(int i = 0; i < beacon.getUuids().length; i++){
-                Log.d("UUIDs", "" + beacon.getUuids()[i].getUuid());
-            }
+            Log.d("btSocket", "Connected to:" + btSocket.getRemoteDevice().getName());
 
-            if(!btSocket.isConnected()){
+
+            if(!btSocket.isConnected()) {
                 Log.d("btSocket", "Using this UUID to connect: " + uuid);
                 btSocket.connect();
             }
@@ -452,30 +464,8 @@ public class HomeActivity extends Activity {
             String mes = message;
             OutputStream out = btSocket.getOutputStream();
             out.write(mes.getBytes());
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            try{
-                for(int i = 0; i < beacon.getUuids().length; i++){
-                    Log.d("btSocket","trying to create socket with: " + (beacon.getUuids()[i].getUuid()));
-                    btSocket = beacon.createRfcommSocketToServiceRecord(beacon.getUuids()[i].getUuid());
-                    btSocket.connect();
-                }
-            }
-            catch (Exception ex){
-                ex.printStackTrace();
-                try{
-                    for(int i = 1; i < beacon.getUuids().length; i++){
-                        Log.d("btSocket","trying to create socket with: " + (beacon.getUuids()[i].getUuid()));
-                        btSocket = beacon.createRfcommSocketToServiceRecord(beacon.getUuids()[i].getUuid());
-                        btSocket.connect();
-                    }
-                }
-                catch (Exception exe){
-                    exe.printStackTrace();
-                }
-            }
-            //Toast.makeText(this, "Beacon error: Not connected!", Toast.LENGTH_SHORT).show();
+            Log.d("btSocket", ""+btSocket.isConnected());
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -520,7 +510,32 @@ public class HomeActivity extends Activity {
     }
 
     private void parseMessage(String message) {
+        Log.d("receivedBTMessage",message);
+        String[] first = message.split(";");
 
+        for(String m : first) {
+            String key = m.substring(0,m.indexOf(":"));
+            String value = m.substring(m.indexOf(":"), m.length());
+
+            switch(key) {
+                case "battery" :
+                    batteryLevel = Integer.parseInt(value);
+                    break;
+                case "mph" :
+                    droneMPH = Integer.parseInt(value);
+                    break;
+                case "connected" :
+                    if("true".equals(value)){
+                        isDroneConnected = true;
+                    }
+                    else if("false".equals(value)){
+                        isDroneConnected = false;
+                    }
+                    break;
+                default :
+                    Log.d("parseMessage","Bad Input Value: " + value);
+            }
+        }
     }
 
     @Override

@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="5dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -142,6 +142,15 @@
                 android:layout_marginRight="8dp"
                 android:layout_toRightOf="@+id/loop_rad_input"
                 android:layout_alignBottom="@+id/follow_dist_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/blankText"
+                android:layout_below="@+id/follow_dist_text"
+                android:layout_alignParentStart="true"
+                android:textSize="20sp" />
         </RelativeLayout>
 
     </LinearLayout>
@@ -180,7 +189,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/gps_select"
                 android:id="@+id/switch1"
-                android:checked="false" />
+                android:checked="true" />
 
         </RelativeLayout>
     </LinearLayout>
