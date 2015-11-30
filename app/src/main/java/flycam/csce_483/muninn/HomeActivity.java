@@ -203,8 +203,12 @@ public class HomeActivity extends Activity {
                 btMsg = msg;
             }
             public void run() {
+                if(!mBluetoothAdapter.isEnabled()){
+                    Log.d("workerThread", "BT is not enabled for a settings worker thread!");
+                    return;
+                }
                 sendBTMessage(btMsg);
-                while(!Thread.currentThread().isInterrupted()) {
+                while(!Thread.currentThread().isInterrupted() && mBluetoothAdapter.isEnabled()) {
                     int bytesAvailable;
                     boolean workDone = false;
 
@@ -227,6 +231,7 @@ public class HomeActivity extends Activity {
                                     System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
                                     final String data = new String(encodedBytes, "US-ASCII");
                                     readBufferPosition = 0;
+                                    Log.d("bt receive","String that was received in thread: " + data);
 
                                     //The variable data now contains our full command
                                     handler.post(new Runnable() {
@@ -243,7 +248,6 @@ public class HomeActivity extends Activity {
                                 }
                             }
                             if (workDone == true){
-                                btSocket.close();
                                 break;
                             }
                         }
@@ -268,31 +272,32 @@ public class HomeActivity extends Activity {
                 try {
                     if (null != beacon) {
                         Log.d("refreshHandler", "Attempting new refresh thread: " + temp_counter++);
-                        //(new Thread(new workerThread("refresh:na"))).start();
-                        Toast.makeText(getApplicationContext(), "Settings refreshed!", Toast.LENGTH_SHORT).show();
-                        sendBTMessage("Testing:" + temp_counter);
+                        if(mBluetoothAdapter.isEnabled()){
+                            (new Thread(new workerThread("refresh:na"))).start();
+                            Toast.makeText(getApplicationContext(), "Settings refreshed!", Toast.LENGTH_SHORT).show();
+                        }
                         Log.d("refreshHandler", "GPS is: " + getGPSCoordinates());
                     }
-                    settingsHandler.postDelayed(this, 2000);
+                    settingsHandler.postDelayed(this, 10000);
                 }
                 catch(Exception e) {
                     e.printStackTrace();
                 }
             }
         };
-        settingsHandler.postDelayed(runnable, 2000);
+        settingsHandler.postDelayed(runnable, 10000);
 
     }
 
     // Goes through the action of attempting to launch or land the device, sent via bluetooth
     public void launchLand(View view) {
-        /*if(null == beacon){
+        if(null == beacon){
             connectBeacon(view);
         }
         else {
             if (flightStatus) { // If in flight
                 //send signals to land the drone
-                //sendBTMessage("0launch_land:land");
+                sendBTMessage("launch_land:land");
 
                 launchLandText.setText(R.string.landed);
                 launchLandButton.setText(R.string.launch);
@@ -300,14 +305,13 @@ public class HomeActivity extends Activity {
             }
             else { // on the ground
                 //send signals to launch the drone
-                //sendBTMessage("0launch_land:launch");
+                sendBTMessage("launch_land:launch");
 
                 launchLandButton.setText(R.string.land);
                 launchLandText.setText(R.string.in_flight);
                 flightStatus=!flightStatus;
             }
-        }*/
-        sendBTMessage("Testing Message!!!");
+        }
     }
 
 
@@ -346,15 +350,14 @@ public class HomeActivity extends Activity {
         // Get switch information
 
         Toast.makeText(getApplicationContext(), "Settings have been saved!", Toast.LENGTH_SHORT).show();
-        //sendBTMessage(generateSettingsMessage());
+        sendBTMessage(generateSettingsMessage());
 
         setContentView(R.layout.activity_home);
     }
 
 
     private String generateSettingsMessage() {
-        String message = "1";
-
+        String message = "";
         message += "hover_distance:" + hover_dist + ";";
         message += "loop_radius:" + loop_radius + ";";
         message += "follow_distance:" + follow_dist;
@@ -387,7 +390,10 @@ public class HomeActivity extends Activity {
                             default:
                                 message+="ERR";
                         }
-                        //sendBTMessage("2flight_mode:"+message);
+                        sendBTMessage("flight_mode:"+message);
+                        if(selectedMode == 0 || selectedMode == 1) {
+                            sendBTMessage(getGPSCoordinates());
+                        }
                     }
                 });
         builder.create().show();
@@ -445,30 +451,35 @@ public class HomeActivity extends Activity {
 
     private void sendBTMessage(String message) {
         Log.d("btMessage",message);
-        try {
-            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-            //UUID uuid = beacon.getUuids()[0].getUuid();
-            if(null == btSocket)
-                btSocket = beacon.createRfcommSocketToServiceRecord(uuid);
 
-            mBluetoothAdapter.cancelDiscovery();
-            Log.d("btSocket", "Connected to:" + btSocket.getRemoteDevice().getName());
-
-
-            if(!btSocket.isConnected()) {
-                Log.d("btSocket", "Using this UUID to connect: " + uuid);
-                btSocket.connect();
-            }
-
-            Log.d("btSocket", "CONNECTED!!!");
-            String mes = message;
-            OutputStream out = btSocket.getOutputStream();
-            out.write(mes.getBytes());
-            Log.d("btSocket", ""+btSocket.isConnected());
-
+        if(!mBluetoothAdapter.isEnabled()){
+            Toast.makeText(getApplicationContext(), "Beacon is not connected! Please hit the connect beacon button!", Toast.LENGTH_SHORT);
         }
-        catch (Exception e) {
-            e.printStackTrace();
+        else {
+            try {
+                UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+                //UUID uuid = beacon.getUuids()[0].getUuid();
+                if (null == btSocket)
+                    btSocket = beacon.createRfcommSocketToServiceRecord(uuid);
+
+                mBluetoothAdapter.cancelDiscovery();
+                Log.d("btSocket", "Connected to:" + btSocket.getRemoteDevice().getName());
+
+
+                if (!btSocket.isConnected()) {
+                    Log.d("btSocket", "Using this UUID to connect: " + uuid);
+                    btSocket.connect();
+                }
+
+                Log.d("btSocket", "CONNECTED!!!");
+                String mes = message;
+                OutputStream out = btSocket.getOutputStream();
+                out.write(mes.getBytes());
+                Log.d("btSocket", "" + btSocket.isConnected());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -497,9 +508,10 @@ public class HomeActivity extends Activity {
 
     private String getGPSCoordinates() {
         String gpsMessage = "";
+        //Connor wants GPS:lat,long
         //send GPS information
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            gpsMessage+="3long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;;
+            gpsMessage+="long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;;
         }
         else{
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -515,7 +527,7 @@ public class HomeActivity extends Activity {
 
         for(String m : first) {
             String key = m.substring(0,m.indexOf(":"));
-            String value = m.substring(m.indexOf(":"), m.length());
+            String value = m.substring(m.indexOf(":")+1, m.length());
 
             switch(key) {
                 case "battery" :

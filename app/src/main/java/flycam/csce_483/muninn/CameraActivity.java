@@ -9,8 +9,10 @@ import android.net.Uri;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.VideoView;
 
 
@@ -33,9 +35,11 @@ public class CameraActivity extends Activity {
 
     private boolean mode; // true is camera mode, false is video mode
     private boolean recording;
-    private boolean goProHero4 = false; // false is hero2, true is hero4
+    private boolean goProHero4; // false is hero2, true is hero4
 
     private VideoView videoView;
+
+    private Switch whichGoPro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +50,27 @@ public class CameraActivity extends Activity {
 
         setContentView(R.layout.activity_camera);
 
-        //connectToCamera();
+        connectToCamera();
+
+        whichGoPro = (Switch) findViewById(R.id.goproSwitch);
+
+        whichGoPro.setChecked(false);
+        goProHero4 = false;
+
+        whichGoPro.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked) {
+                    // The switch is enabled
+                    Log.d("camera", "GoProHero4 is enabled");
+                    goProHero4 = true;
+                }
+                else {
+                    Log.d("camera", "GoProHero4 is disabled");
+                    goProHero4 = false;
+                }
+            }
+        });
 
         videoView = (VideoView) findViewById(R.id.liveVideo);
         String videoURL = "http://10.5.5.9:8080/live/amba.m3u8";
@@ -72,10 +96,16 @@ public class CameraActivity extends Activity {
 
                     // switches to camera mode
                     if(goProHero4) {
-                        sendRequest("10.5.5.9/gp/gpControl/command/mode?p=1");
+                        sendRequest("http://10.5.5.9/gp/gpControl/command/mode?p=1");
                     }
-                    else
+                    else {
                         sendRequest("http://10.5.5.9:80/camera/CM?t=muninn483&p=%01");
+                    }
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 if (mode && !recording) {
@@ -83,7 +113,7 @@ public class CameraActivity extends Activity {
 
                     // send request to take picture on goPro
                     if(goProHero4){
-                        sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");
+                        sendRequest("http://10.5.5.9/gp/gpControl/command/shutter?p=1");
                     }
                     else
                         sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%01");
@@ -99,19 +129,24 @@ public class CameraActivity extends Activity {
 
                     // switches to video mode
                     if(goProHero4){
-                        sendRequest("10.5.5.9/gp/gpControl/command/mode?p=0");
+                        sendRequest("http://10.5.5.9/gp/gpControl/command/mode?p=0");
                     }
                     else {
                         sendRequest("http://10.5.5.9:80/camera/CM?t=muninn483&p=%00");
+                    }
 
-                        videoView.start();
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
 
                 }
                 if (!mode && !recording) {
                     // send request to start recording on goPro
+
                     if(goProHero4){
-                        sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=1");
+                        sendRequest("http://10.5.5.9/gp/gpControl/command/shutter?p=1");
                     }
                     else {
                         sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%01");
@@ -131,7 +166,7 @@ public class CameraActivity extends Activity {
 
                 // send request to stop recording on goPro
                 if(goProHero4){
-                    sendRequest("10.5.5.9/gp/gpControl/command/shutter?p=0");
+                    sendRequest("http://10.5.5.9/gp/gpControl/command/shutter?p=0");
                 }
                 else {
                     sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%00");
@@ -149,11 +184,10 @@ public class CameraActivity extends Activity {
     private void connectToCamera() {
 
         if(goProHero4){
-            sendRequest("10.5.5.9/gp/gpControl/command/mode?p=0");
+            sendRequest("http://10.5.5.9/gp/gpControl/command/mode?p=0");
         }
         else
-            sendRequest("http://10.5.5.9:80/bacpac/PW?t=muninn483&p=%00");
-
+            sendRequest("http://10.5.5.9:80/bacpac/PW?t=muninn483&p=%01");
     }
 
     private void sendRequest(String s) {

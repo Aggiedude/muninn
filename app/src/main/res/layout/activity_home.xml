@@ -188,6 +188,7 @@
         android:layout_height="match_parent"
         android:background="@android:color/background_dark"
         android:id="@+id/drawer"
+        android:clickable="true"
         android:layout_gravity="start">
 
         <TextView

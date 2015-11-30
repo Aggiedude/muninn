@@ -64,4 +64,15 @@
         android:layout_marginBottom="10dp"
         android:visibility="invisible" />
 
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/which_gopro"
+        android:textColor="@color/ColorPrimary"
+        android:id="@+id/goproSwitch"
+        android:layout_alignBottom="@+id/liveVideo"
+        android:layout_alignParentStart="true"
+        android:checked="false"
+        android:layout_marginLeft="10dp" />
+
 </RelativeLayout>
