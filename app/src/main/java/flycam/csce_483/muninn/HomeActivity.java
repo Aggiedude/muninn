@@ -14,6 +14,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -82,6 +84,8 @@ public class HomeActivity extends Activity {
     private ArrayAdapter<String> btArrayAdapter;
     private BluetoothDevice beacon = null;
     private BluetoothSocket btSocket;
+
+    private Handler errHandler;
 
     final byte delimiter = 33;
     int readBufferPosition = 0;
@@ -272,25 +276,13 @@ public class HomeActivity extends Activity {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                try {
                     if (null != beacon) {
                         Log.d("refreshHandler", "Attempting new refresh thread: " + temp_counter++);
                         if(mBluetoothAdapter.isEnabled()){
                             (new Thread(new workerThread("refresh:na"))).start();
-                            Toast.makeText(getApplicationContext(), "Drone Stats refreshed!", Toast.LENGTH_SHORT).show();
-                        }
-                        // checks to see whether or not the drone has landed
-                        if(droneMPH == 0) {
-                            launchLandButton.setClickable(true);
-                            launchLandText.setText(R.string.landed);
-                            launchLandButton.setText(R.string.launch);
                         }
                     }
                     settingsHandler.postDelayed(this, 10000);
-                }
-                catch(Exception e) {
-                    e.printStackTrace();
-                }
             }
         };
         settingsHandler.postDelayed(runnable, 10000);
@@ -300,20 +292,23 @@ public class HomeActivity extends Activity {
         Runnable gpsRunnable = new Runnable() {
             @Override
             public void run() {
+                Log.d("gpsRunnable", "Inside the gpsRunnable");
                 if (selectedMode == 2) { // only need to send GPS every 3 seconds when in this mode.
-                    try {
-                        /*String lat = "" + myLocationListener.latitude;
-                        String lon = "" + myLocationListener.longitude;
-                        Toast.makeText(getApplicationContext(), "GPS coordinates are - Lat: " + lat + ", Long: " + lon, Toast.LENGTH_SHORT).show();*/
-                        sendBTMessage(getGPSCoordinatesMessage());
-                        gpsHandler.postDelayed(this, 5000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    Log.d("gpsRunnable", "Attempting to send GPS coordinates");
+                    sendBTMessage(getGPSCoordinatesMessage());
                 }
+                gpsHandler.postDelayed(this, 5000);
             }
         };
         gpsHandler.postDelayed(gpsRunnable, 5000);
+
+        errHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message message){
+                beacon_connection_text.setText(R.string.not_connected);
+                Toast.makeText(getApplicationContext(), "Oops. Not connected to the beacon!", Toast.LENGTH_SHORT).show();
+            }
+        };
 
     }
 
@@ -326,15 +321,8 @@ public class HomeActivity extends Activity {
             if (flightStatus) { // If in flight
                 //send signals to land the drone
                 sendBTMessage("launch_land:land");
-                if(droneMPH > 0){
-                    launchLandButton.setClickable(false);
-                    launchLandButton.setText(R.string.landing);
-                    launchLandText.setText(R.string.landing);
-                }
-                else {
-                    launchLandText.setText(R.string.landed);
-                    launchLandButton.setText(R.string.launch);
-                }
+                launchLandText.setText(R.string.landed);
+                launchLandButton.setText(R.string.launch);
                 flightStatus = !flightStatus;
             }
             else { // on the ground
@@ -343,7 +331,7 @@ public class HomeActivity extends Activity {
 
                 launchLandButton.setText(R.string.land);
                 launchLandText.setText(R.string.in_flight);
-                flightStatus=!flightStatus;
+                flightStatus = !flightStatus;
             }
         }
     }
@@ -424,10 +412,7 @@ public class HomeActivity extends Activity {
                             default:
                                 message+="ERR";
                         }
-                        sendBTMessage("flight_mode:"+message);
-                        if(selectedMode == 0 || selectedMode == 1) {
-                            sendBTMessage(getGPSCoordinatesMessage());
-                        }
+                        sendBTMessage("flight_mode:"+message+";"+getGPSCoordinatesMessage());
                     }
                 });
         builder.create().show();
@@ -474,8 +459,9 @@ public class HomeActivity extends Activity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                Toast.makeText(getApplicationContext(), "Paired with " + foundDevices.get(which), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Using " + foundDevices.get(which).getName() + " as the Muninn beacon", Toast.LENGTH_SHORT).show();
                 beacon = foundDevices.get(which);
+                beacon_connection_text.setText(R.string.connected);
             }
         });
 
@@ -513,6 +499,8 @@ public class HomeActivity extends Activity {
 
             } catch (Exception e) {
                 e.printStackTrace();
+                Message m = errHandler.obtainMessage(0);
+                m.sendToTarget();
             }
         }
     }
@@ -553,6 +541,11 @@ public class HomeActivity extends Activity {
                 }
                 catch (SecurityException e) {
                     e.printStackTrace();
+                }
+                catch (NullPointerException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), "GPS cannot be found!", Toast.LENGTH_SHORT).show();
+                    return gpsMessage + "ERR";
                 }
             }
             else
