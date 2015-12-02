@@ -560,6 +560,7 @@ public class HomeActivity extends Activity {
     }
 
     private void parseMessage(String message) {
+        // expecting "battery:70;mph:34;connected:true
         Log.d("receivedBTMessage",message);
         String[] first = message.split(";");
 

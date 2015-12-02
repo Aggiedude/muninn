@@ -7,13 +7,14 @@
     tools:context="flycam.csce_483.muninn.CameraActivity"
     android:tag="camera">
 
-    <VideoView
-        android:id="@+id/liveVideo"
+    <ImageView
+        android:id="@+id/livePhoto"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignParentStart="false"
         android:layout_alignParentEnd="false"
-        android:layout_centerInParent="true" />
+        android:layout_centerInParent="true"
+        android:visibility="visible" />
 
     <ImageButton
         android:layout_width="70dp"
@@ -68,11 +69,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/which_gopro"
-        android:textColor="@color/ColorPrimary"
+        android:textColor="@color/ColorPrimaryDark"
         android:id="@+id/goproSwitch"
-        android:layout_alignBottom="@+id/liveVideo"
         android:layout_alignParentStart="true"
         android:checked="false"
-        android:layout_marginLeft="10dp" />
+        android:layout_marginLeft="10dp"
+        android:layout_centerInParent="true"
+        android:layout_alignBottom="@+id/livePhoto" />
 
 </RelativeLayout>
