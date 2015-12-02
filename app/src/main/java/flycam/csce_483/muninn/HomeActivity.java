@@ -1,10 +1,8 @@
 package flycam.csce_483.muninn;
 
-import android.Manifest;
 import android.app.Activity;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -12,43 +10,28 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.location.GpsStatus;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.WorkerThread;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class HomeActivity extends Activity {
@@ -67,6 +50,8 @@ public class HomeActivity extends Activity {
     private int temp_counter = 0;
 
     SharedPreferences sharedPreferences;
+
+    // Location variables
     private LocationManager locationManager;
     MyLocationListener myLocationListener;
 
@@ -86,12 +71,12 @@ public class HomeActivity extends Activity {
 
     // Fields for drone settings
     private int batteryLevel;
-    private boolean isDroneConnected;
-    private int droneMPH;
+    private boolean isDroneConnected = false;
+    private int droneMPH = 0;
 
     // Fields for Bluetooth
     private int REQUEST_ENABLE_BT = 1;
-    private int REQUEST_DISCOVERABLE_BT = 2;
+    private int REQUEST_ENABLE_GPS = 2;
     private ArrayList<BluetoothDevice> foundDevices;
     private BluetoothAdapter mBluetoothAdapter;
     private ArrayAdapter<String> btArrayAdapter;
@@ -142,9 +127,21 @@ public class HomeActivity extends Activity {
                 TextView dbattery_text = (TextView) findViewById(R.id.battery_level_text);
                 TextView dmode = (TextView) findViewById(R.id.drone_status_flight_mode_text);
 
+                ImageView drNotConnected = (ImageView) findViewById(R.id.drone_not_connected_symbol);
+                ImageView drConnected = (ImageView) findViewById(R.id.drone_connected_symbol);
+
                 dflight_stat.setText(launchLandText.getText().toString());
                 dbattery_text.setText(""+batteryLevel);
                 dmode.setText(modes[selectedMode]);
+
+                if(isDroneConnected){
+                    drNotConnected.setVisibility(View.INVISIBLE);
+                    drConnected.setVisibility(View.VISIBLE);
+                }
+                else {
+                    drNotConnected.setVisibility(View.VISIBLE);
+                    drConnected.setVisibility(View.INVISIBLE);
+                }
             }
         });
 
@@ -155,7 +152,6 @@ public class HomeActivity extends Activity {
             public void onClick(View v) {
                 //Opens the Drawer
                 mDrawerLayout.openDrawer(drawerView);
-                Log.d("drawer","Button clicked!");
             }
 
         });
@@ -173,25 +169,32 @@ public class HomeActivity extends Activity {
         loop_radius = 25;
         follow_dist = 20;
 
+        // Setting up Location Listeners
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         myLocationListener = new MyLocationListener();
 
-        try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
-        }
-        catch (SecurityException e) {
-            e.printStackTrace();
-        }
         // Prompts user to connect to Muninn wifi and bluetooth manually
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Make sure that you have connected to Muninn's wi-fi and bluetooth! And also turn on your location services!");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ;// purposely left open
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(intent,REQUEST_ENABLE_GPS);
+                }
             }
         });
-        builder.create().show();
+        builder.setCancelable(false).create().show();
+
+        try {
+
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
+        }
+        catch (SecurityException e) {
+            e.printStackTrace();
+        }
+
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         final Handler handler = new Handler();
@@ -274,9 +277,14 @@ public class HomeActivity extends Activity {
                         Log.d("refreshHandler", "Attempting new refresh thread: " + temp_counter++);
                         if(mBluetoothAdapter.isEnabled()){
                             (new Thread(new workerThread("refresh:na"))).start();
-                            Toast.makeText(getApplicationContext(), "Settings refreshed!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), "Drone Stats refreshed!", Toast.LENGTH_SHORT).show();
                         }
-                        Log.d("refreshHandler", "GPS is: " + getGPSCoordinates());
+                        // checks to see whether or not the drone has landed
+                        if(droneMPH == 0) {
+                            launchLandButton.setClickable(true);
+                            launchLandText.setText(R.string.landed);
+                            launchLandButton.setText(R.string.launch);
+                        }
                     }
                     settingsHandler.postDelayed(this, 10000);
                 }
@@ -286,6 +294,26 @@ public class HomeActivity extends Activity {
             }
         };
         settingsHandler.postDelayed(runnable, 10000);
+
+        final Handler gpsHandler = new Handler();
+
+        Runnable gpsRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (selectedMode == 2) { // only need to send GPS every 3 seconds when in this mode.
+                    try {
+                        /*String lat = "" + myLocationListener.latitude;
+                        String lon = "" + myLocationListener.longitude;
+                        Toast.makeText(getApplicationContext(), "GPS coordinates are - Lat: " + lat + ", Long: " + lon, Toast.LENGTH_SHORT).show();*/
+                        sendBTMessage(getGPSCoordinatesMessage());
+                        gpsHandler.postDelayed(this, 5000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        gpsHandler.postDelayed(gpsRunnable, 5000);
 
     }
 
@@ -298,10 +326,16 @@ public class HomeActivity extends Activity {
             if (flightStatus) { // If in flight
                 //send signals to land the drone
                 sendBTMessage("launch_land:land");
-
-                launchLandText.setText(R.string.landed);
-                launchLandButton.setText(R.string.launch);
-                flightStatus=!flightStatus;
+                if(droneMPH > 0){
+                    launchLandButton.setClickable(false);
+                    launchLandButton.setText(R.string.landing);
+                    launchLandText.setText(R.string.landing);
+                }
+                else {
+                    launchLandText.setText(R.string.landed);
+                    launchLandButton.setText(R.string.launch);
+                }
+                flightStatus = !flightStatus;
             }
             else { // on the ground
                 //send signals to launch the drone
@@ -392,7 +426,7 @@ public class HomeActivity extends Activity {
                         }
                         sendBTMessage("flight_mode:"+message);
                         if(selectedMode == 0 || selectedMode == 1) {
-                            sendBTMessage(getGPSCoordinates());
+                            sendBTMessage(getGPSCoordinatesMessage());
                         }
                     }
                 });
@@ -496,29 +530,40 @@ public class HomeActivity extends Activity {
 
     // Goes through the process of connecting the phone to the beacon
     public void connectBeacon(View view) {
-
         if(null == beacon) {
             setupBT();
         }
         else {
             Toast.makeText(getApplicationContext(), "Beacon is already connected!", Toast.LENGTH_SHORT).show();
         }
-
     }
 
-    private String getGPSCoordinates() {
-        String gpsMessage = "";
-        //Connor wants GPS:lat,long
+    private String getGPSCoordinatesMessage() {
+        String gpsMessage = "GPS:";
+
         //send GPS information
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            gpsMessage+="long:"+myLocationListener.longitude+";lat:"+myLocationListener.latitude;;
+            if(myLocationListener.longitude == 0){ // doesn't have position from GPS provider
+                try{
+                    Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if(loc.getLongitude() == 0){ // still doesn't have position
+                        return gpsMessage + "ERR";
+                    }
+                    return gpsMessage + loc.getLatitude()+","+loc.getLongitude();
+                }
+                catch (SecurityException e) {
+                    e.printStackTrace();
+                }
+            }
+            else
+                return gpsMessage + myLocationListener.latitude + "," + myLocationListener.longitude; // Good return
         }
         else{
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivityForResult(intent, 0);
         }
 
-        return gpsMessage;
+        return gpsMessage + "ERR";
     }
 
     private void parseMessage(String message) {

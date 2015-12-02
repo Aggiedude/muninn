@@ -228,7 +228,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="@string/connect_status"
-                android:id="@+id/textView"
+                android:id="@+id/droneConnectionStatusText"
                 android:textColor="@android:color/white"
                 android:layout_marginRight="15dp" />
 
@@ -238,8 +238,18 @@
                 android:id="@+id/drone_connected_symbol"
                 android:src="@drawable/drone_connected_symbol"
                 android:layout_marginBottom="10dp"
+                android:visibility="invisible"
+                android:layout_toRightOf="@+id/droneConnectionStatusText"
+                android:layout_centerVertical="true" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/drone_not_connected_symbol"
+                android:src="@drawable/recording_symbol"
+                android:layout_marginBottom="10dp"
                 android:visibility="visible"
-                android:layout_toRightOf="@+id/textView"
+                android:layout_toRightOf="@+id/droneConnectionStatusText"
                 android:layout_centerVertical="true" />
 
         </RelativeLayout>
