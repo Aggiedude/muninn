@@ -139,7 +139,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
             android:nestedScrollingEnabled="true"
-            android:onClick="selectMode" />
+            android:onClick="selectFlightMode" />
 
         <Button
             android:layout_width="128dp"

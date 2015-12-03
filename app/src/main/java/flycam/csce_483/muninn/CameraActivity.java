@@ -74,7 +74,7 @@ public class CameraActivity extends Activity {
         if(!wifiSSID.equals("\"Muninn\"")){
             // Prompts user to connect to Muninn wifi and bluetooth manually
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("You are not connected to the correct wifi! Once connected, you will be able to access camera functionality!");
+            builder.setMessage("You are not connected to the correct wifi! Once connected, you will be able to access camera functionality!\n*HINT* Be sure your GoPro's network id is \"Muninn\".");
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {

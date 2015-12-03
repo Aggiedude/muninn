@@ -3,7 +3,8 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="select_mode">Select Muninn\'s Mode</string>
+    <string name="select_mode">Select Muninn\'s Flight Mode</string>
+    <string name="select_camera_mode">Select the Camera Mode</string>
 
 
     <string name="action_example">Example action</string>
@@ -51,4 +52,5 @@
     <string name="loop">Loop</string>
     <string name="follow_me">Follow Me</string>
     <string name="which_gopro">GoPro Hero 4?</string>
+    <string name="camera_mode">Camera Mode</string>
 </resources>

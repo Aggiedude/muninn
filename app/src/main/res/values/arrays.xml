@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="mode_select_array">
+    <string-array name="flight_mode_select_array">
         <item>Hover</item>
         <item>Loop</item>
         <item>Follow-Me</item>
+    </string-array>
+    <string-array name="hover_mode_select_array">
+        <item>Fixed Ahead</item>
+        <item>Pan 180</item>
+        <item>Rotate 360</item>
     </string-array>
 </resources>
