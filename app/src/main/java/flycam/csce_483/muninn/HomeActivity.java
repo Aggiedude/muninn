@@ -38,8 +38,8 @@ import java.util.UUID;
 
 public class HomeActivity extends Activity {
 
-    final CharSequence[] modes = {"Hover", "Loop", "Follow-Me"};
-    private int selectedMode;
+    private int selectedFlightMode;
+    private int selectedCameraMode;
 
     private boolean flightStatus = false; // 1 for in flight, 0 otherwise
     private boolean beaconStatus = false; // 1 for connected, 0 otherwise
@@ -136,7 +136,7 @@ public class HomeActivity extends Activity {
 
                 dflight_stat.setText(launchLandText.getText().toString());
                 dbattery_text.setText(""+batteryLevel);
-                dmode.setText(modes[selectedMode]);
+                dmode.setText(getResources().getStringArray(R.array.flight_mode_select_array)[selectedFlightMode]);
 
                 if(isDroneConnected){
                     drNotConnected.setVisibility(View.INVISIBLE);
@@ -293,7 +293,7 @@ public class HomeActivity extends Activity {
             @Override
             public void run() {
                 Log.d("gpsRunnable", "Inside the gpsRunnable");
-                if (selectedMode == 2) { // only need to send GPS every 3 seconds when in this mode.
+                if (selectedFlightMode == 2) { // only need to send GPS every 3 seconds when in this mode.
                     Log.d("gpsRunnable", "Attempting to send GPS coordinates");
                     sendBTMessage(getGPSCoordinatesMessage());
                 }
@@ -388,20 +388,21 @@ public class HomeActivity extends Activity {
     }
 
     // Updates the current mode selection
-    public void selectMode(View view) {
+    public void selectFlightMode(View view) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.select_mode)
-                .setSingleChoiceItems(R.array.mode_select_array, selectedMode, new DialogInterface.OnClickListener() {
+                .setSingleChoiceItems(R.array.flight_mode_select_array, selectedFlightMode, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        Toast.makeText(getApplicationContext(), "Muninn is now set to " + modes[which] + " mode!", Toast.LENGTH_SHORT).show();
-                        selectedMode = which;
+                        Toast.makeText(getApplicationContext(), "Muninn is now set to " + getResources().getStringArray(R.array.flight_mode_select_array)[which] + " mode!", Toast.LENGTH_SHORT).show();
+                        selectedFlightMode = which;
                         String message = "";
-                        switch (selectedMode){
+                        switch (selectedFlightMode){
                             case 0 :
                                 message+="hover";
+                                selectCameraMode(0);
                                 break;
                             case 1 :
                                 message+="loop";
@@ -413,6 +414,35 @@ public class HomeActivity extends Activity {
                                 message+="ERR";
                         }
                         sendBTMessage("flight_mode:"+message+";"+getGPSCoordinatesMessage());
+                    }
+                });
+        builder.create().show();
+    }
+
+    private void selectCameraMode(int flightMode) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.select_camera_mode)
+                .setSingleChoiceItems(R.array.hover_mode_select_array, selectedCameraMode, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "The camera is now set to " + getResources().getStringArray(R.array.hover_mode_select_array)[which] + "!", Toast.LENGTH_SHORT).show();
+                        selectedCameraMode = which;
+                        String message = "";
+                        switch (selectedFlightMode){
+                            case 0 :
+                                message+="fixed";
+                                break;
+                            case 1 :
+                                message+="pan";
+                                break;
+                            case 2 :
+                                message+="rotate";
+                                break;
+                            default:
+                                message+="ERR";
+                        }
+                        sendBTMessage("camera_mode:"+message);
                     }
                 });
         builder.create().show();
