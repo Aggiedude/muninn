@@ -1,24 +1,26 @@
 package flycam.csce_483.muninn;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.MediaPlayer;
-import android.media.session.MediaSession;
+import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.net.Uri;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
-import android.widget.MediaController;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
-import android.widget.VideoView;
 
 
 import com.android.volley.Request;
@@ -27,13 +29,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-
-import java.net.URL;
-
-import cz.msebera.android.httpclient.Header;
 
 public class CameraActivity extends Activity {
 
@@ -44,13 +39,13 @@ public class CameraActivity extends Activity {
     private boolean mode; // true is camera mode, false is video mode
     private boolean recording;
     private boolean goProHero4; // false is hero2, true is hero4
-    private boolean photoNumberFound = false;
 
     private ImageView imageView;
 
     private Switch whichGoPro;
 
-    private int currentPhotoNumber = 78;
+    private int currentGoProNumber = 0;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,16 +63,38 @@ public class CameraActivity extends Activity {
 
         whichGoPro.setChecked(true);
         goProHero4 = true;
+        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        currentGoProNumber = sharedPreferences.getInt("currentGoProNumber", 0);
 
-        connectToCamera();
-        String stringNumber = "";
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        Log.d("wifi", "Connected to: " + wifiManager.getConnectionInfo().getSSID());
 
-       /* do {
-            stringNumber = findCurrentPhotoNumber();
+        String wifiSSID = wifiManager.getConnectionInfo().getSSID();
+
+        if(!wifiSSID.equals("\"Muninn\"")){
+            // Prompts user to connect to Muninn wifi and bluetooth manually
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("You are not connected to the correct wifi! Once connected, you will be able to access camera functionality!");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    ; // purposefully left blank
+                }
+            });
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    finish();
+                }
+            });
+            builder.setCancelable(false).create().show();
         }
-        while(!photoNumberFound);*/
+        else {
+            connectToCamera();
+        }
 
-        Log.d("camera","Made it through");
+
+        Log.d("camera","Made it through, current goProNumber is: " + currentGoProNumber);
 
         whichGoPro.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -125,18 +142,28 @@ public class CameraActivity extends Activity {
 
                 if (mode && !recording) {
                     Log.d("camera", "Made it through to shutter switch");
-                    String photoNum = String.format("%04d", ++currentPhotoNumber);
-                    Log.d("photoNum", "Current photo Num: " + photoNum);
-                    String url = "http://10.5.5.9/videos/DCIM/100GOPRO/GOPR"+photoNum+".JPG";
+
+
+
                     // send request to take picture on goPro
                     if(goProHero4){
                         sendRequest("http://10.5.5.9/gp/gpControl/command/shutter?p=1");
                     }
                     else {
                         sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%01");
+                    }
+                    incrementGoProNumber();
+
+                    String photoNum = String.format("%04d", currentGoProNumber);
+                    Log.d("photoNum", "Current photo Num: " + photoNum);
+
+                    String url = "";
+                    if(goProHero4){
+                        url = "http://10.5.5.9/videos/DCIM/100GOPRO/GOPR"+photoNum+".JPG";
+                    }
+                    else {
                         url = "http://10.5.5.9:8080/videos/DCIM/100GOPRO/GOPR"+photoNum+".JPG";
                     }
-                    String photoNumber = "";
 
                     try {
                         Thread.sleep(2000);
@@ -214,6 +241,8 @@ public class CameraActivity extends Activity {
                     sendRequest("http://10.5.5.9:80/bacpac/SH?t=muninn483&p=%00");
                 }
 
+                incrementGoProNumber();
+
                 recording = false;
                 fabRecord.setVisibility(View.VISIBLE);
                 fabStopRecord.setVisibility(View.INVISIBLE);
@@ -226,69 +255,22 @@ public class CameraActivity extends Activity {
 
         if(goProHero4){
             sendRequest("http://10.5.5.9/gp/gpControl/command/mode?p=1");
+            mode = true;
         }
         else
             sendRequest("http://10.5.5.9:80/bacpac/PW?t=muninn483&p=%01");
     }
 
-    private void incrementPhotoNumber() {
-        currentPhotoNumber+=2;
+    private void incrementGoProNumber() {
+
+        currentGoProNumber++;
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("currentGoProNumber", currentGoProNumber);
+        editor.commit();
     }
 
-    private String findCurrentPhotoNumber() {
-
-            if(currentPhotoNumber == 0){
-                photoNumberFound = true;
-                return "0000";
-            }
-            String url = "";
-
-            String photoNumber = String.format("%04d", currentPhotoNumber);
-
-            Log.d("photoNumber","Trying to get photo number: " + photoNumber);
-            Log.d("number", "Current Photo Number: " + currentPhotoNumber);
-            Log.d("request", "Current Request is: " + url);
-
-            if(goProHero4) {
-                //url = "http://10.5.5.9/videos/DCIM/100GOPRO/GOPR"+photoNumber+".JPG";
-                url = "http://10.5.5.9:/videos/DCIM/100GOPRO";
-            }
-            else {
-                //url = "http://10.5.5.9:8080/videos/DCIM/100GOPRO/GOPR"+photoNumber+".JPG";
-                url = "http://10.5.5.9:8080/videos/DCIM/100GOPRO";
-            }
-
-
-
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            // Result handling
-                            Log.d("camera","SUCCESS");
-                            Log.d("camera", response);
-
-                            photoNumberFound = true;
-
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    currentPhotoNumber--;
-                    // Error handling
-                    Log.d("camera","Something went wrong!");
-                    error.printStackTrace();
-                }
-            });
-
-            // Access the RequestQueue through your singleton class.
-            MySingleton.getInstance(getApplicationContext()).addToRequestQueue(stringRequest);
-        currentPhotoNumber--;
-
-        return String.format("%04d", currentPhotoNumber - 1);
-    }
-
-    private void sendRequest(String s) {
+   private void sendRequest(String s) {
         String url = s;
 
         // Request a string response
@@ -321,6 +303,19 @@ public class CameraActivity extends Activity {
     public void onBackPressed() {
         finish();
         super.onBackPressed();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        // Save UI state changes to the savedInstanceState.
+        // This bundle will be passed to onCreate if the process is
+        // killed and restarted.
+        savedInstanceState.putBoolean("MyBoolean", true);
+        savedInstanceState.putDouble("myDouble", 1.9);
+        savedInstanceState.putInt("MyInt", 1);
+        savedInstanceState.putString("MyString", "Welcome back to Android");
+        // etc.
     }
 
     @Override
