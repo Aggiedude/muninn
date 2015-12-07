@@ -206,6 +206,7 @@ public class HomeActivity extends Activity {
         final class workerThread implements Runnable {
 
             private String btMsg;
+            private int numTries = 0;
             public workerThread(String msg) {
                 btMsg = msg;
             }
@@ -215,9 +216,10 @@ public class HomeActivity extends Activity {
                     return;
                 }
                 sendBTMessage(btMsg);
-                while(!Thread.currentThread().isInterrupted() && mBluetoothAdapter.isEnabled()) {
+                while(!Thread.currentThread().isInterrupted() && mBluetoothAdapter.isEnabled() && numTries < 100) {
                     int bytesAvailable;
                     boolean workDone = false;
+                    numTries++;
 
                     try {
                         Log.d("refreshThread", "attempting btConnection for receiving");
@@ -267,6 +269,7 @@ public class HomeActivity extends Activity {
 //                        Toast.makeText(getApplicationContext(), "Beacon error: Not connected!", Toast.LENGTH_SHORT).show();
                     }
                 }
+                Log.d("workerThread", "Exiting worker thread");
             }
         }
 
@@ -429,7 +432,7 @@ public class HomeActivity extends Activity {
                         Toast.makeText(getApplicationContext(), "The camera is now set to " + getResources().getStringArray(R.array.hover_mode_select_array)[which] + "!", Toast.LENGTH_SHORT).show();
                         selectedCameraMode = which;
                         String message = "";
-                        switch (selectedFlightMode){
+                        switch (selectedCameraMode){
                             case 0 :
                                 message+="fixed";
                                 break;
