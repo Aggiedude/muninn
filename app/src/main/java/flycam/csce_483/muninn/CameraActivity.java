@@ -21,6 +21,8 @@ import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
+import android.os.Handler;
+import android.widget.Toast;
 
 
 import com.android.volley.Request;
@@ -94,7 +96,7 @@ public class CameraActivity extends Activity {
         }
 
 
-        Log.d("camera","Made it through, current goProNumber is: " + currentGoProNumber);
+        Log.d("camera", "Made it through, current goProNumber is: " + currentGoProNumber);
 
         whichGoPro.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -108,6 +110,7 @@ public class CameraActivity extends Activity {
                     Log.d("camera", "GoProHero4 is disabled");
                     goProHero4 = false;
                 }
+                connectToCamera();
             }
         });
 
@@ -115,6 +118,8 @@ public class CameraActivity extends Activity {
         fabCamera = (ImageButton) findViewById(R.id.cameraButtonFAB);
         fabRecord = (ImageButton) findViewById(R.id.recordButtonFAB);
         fabStopRecord = (ImageButton) findViewById(R.id.stopButtonFAB);
+
+        final Handler handler = new Handler();
 
         fabCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -182,6 +187,12 @@ public class CameraActivity extends Activity {
                                 public void onErrorResponse(VolleyError error) {
                                     error.printStackTrace();
                                     Log.d("camera", "take a picture, set a picture DOESN'T works!");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(CameraActivity.this, "Camera is unable to grab Live Picture!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
                                 }
                             });
                     // Access the RequestQueue through your singleton class.
@@ -258,7 +269,7 @@ public class CameraActivity extends Activity {
             mode = true;
         }
         else
-            sendRequest("http://10.5.5.9:80/bacpac/PW?t=muninn483&p=%01");
+            sendRequest("http://10.5.5.9:80/camera/CM?t=muninn483&p=%01");
     }
 
     private void incrementGoProNumber() {
